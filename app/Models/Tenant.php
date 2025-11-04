@@ -21,8 +21,6 @@ class Tenant extends BaseTenant
             'subdomain',
             'display_name',
             'logo_url',
-            'primary_color',
-            'secondary_color',
             'active',
             'settings',
         ];
