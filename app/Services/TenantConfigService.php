@@ -1,9 +1,10 @@
 <?php
 
+declare(strict_types=1);
+
 namespace App\Services;
 
 use App\Models\Tenant;
-use Stancl\Tenancy\Facades\Tenancy;
 
 class TenantConfigService
 {
@@ -12,7 +13,7 @@ class TenantConfigService
      */
     public function getCurrentTenant(): \Illuminate\Database\Eloquent\Model|\Stancl\Tenancy\Contracts\Tenant|null
     {
-        if (!tenancy()->initialized) {
+        if (! tenancy()->initialized) {
             return null;
         }
 
@@ -26,7 +27,7 @@ class TenantConfigService
     {
         $tenant = $this->getCurrentTenant();
 
-        if (!$tenant) {
+        if (! $tenant) {
             return $this->getDefaultBrandingConfig();
         }
 
@@ -55,7 +56,7 @@ class TenantConfigService
     {
         $tenant = $this->getCurrentTenant();
 
-        if (!$tenant) {
+        if (! $tenant) {
             return $default;
         }
 
@@ -69,11 +70,12 @@ class TenantConfigService
     {
         $tenant = $this->getCurrentTenant();
 
-        if (!$tenant) {
+        if (! $tenant) {
             return false;
         }
 
         $tenant->setSetting($key, $value);
+
         return $tenant->save();
     }
 

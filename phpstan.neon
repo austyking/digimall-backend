@@ -1,0 +1,27 @@
+includes:
+    - vendor/larastan/larastan/extension.neon
+
+parameters:
+    level: 3
+
+    paths:
+        - app
+        - config
+        - database
+        - routes
+
+    excludePaths:
+        - bootstrap
+        - storage
+        - vendor
+        - node_modules
+
+    ignoreErrors: []
+
+    # checkMissingIterableValueType: true
+    # checkGenericClassInNonGenericObjectType: true
+
+    tmpDir: storage/phpstan
+
+    parallel:
+        maximumNumberOfProcesses: 4

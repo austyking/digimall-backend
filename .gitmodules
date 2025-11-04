@@ -1,0 +1,3 @@
+[submodule "code-style-config"]
+	path = code-style-config
+	url = https://github.com/ebitsgh/org-pint-config.git

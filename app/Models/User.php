@@ -1,20 +1,22 @@
 <?php
 
-namespace App\Models;
-use Lunar\Base\Traits\LunarUser;
-use Lunar\Base\LunarUser as LunarUserInterface;
+declare(strict_types=1);
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
+namespace App\Models;
+
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
+// use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Notifications\Notifiable;
+use Lunar\Base\LunarUser as LunarUserInterface;
+use Lunar\Base\Traits\LunarUser;
 
 class User extends Authenticatable implements LunarUserInterface
 {
-    use LunarUser;
-
     /** @use HasFactory<\Database\Factories\UserFactory> */
     use HasFactory, Notifiable;
+
+    use LunarUser;
 
     /**
      * The attributes that are mass assignable.
