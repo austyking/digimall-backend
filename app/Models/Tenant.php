@@ -87,8 +87,8 @@ class Tenant extends BaseTenant
             'name' => $this->name,
             'display_name' => $this->display_name,
             'logo_url' => $this->logo_url,
-            'primary_color' => $this->primary_color,
-            'secondary_color' => $this->secondary_color,
+            'primary_color' => $this->getSetting('theme.primary_color', '#1976d2'),
+            'secondary_color' => $this->getSetting('theme.secondary_color', '#dc004e'),
             'subdomain' => $this->subdomain,
         ];
     }
