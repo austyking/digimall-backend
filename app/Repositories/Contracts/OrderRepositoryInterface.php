@@ -59,7 +59,7 @@ interface OrderRepositoryInterface
     /**
      * Get orders within date range.
      */
-    public function getByDateRange(\DateTimeInterface $startDate, \DateTimeInterface $endDate): Collection;
+    public function getByDateRange(string $startDate, string $endDate, ?int $limit): Collection;
 
     /**
      * Create a new order.
@@ -94,12 +94,17 @@ interface OrderRepositoryInterface
     /**
      * Get order totals for a period.
      */
-    public function getTotalsByPeriod(\DateTimeInterface $startDate, \DateTimeInterface $endDate): array;
+    public function getTotalsByPeriod(string $startDate, string $endDate): array;
 
     /**
      * Get recent orders.
      */
     public function getRecent(int $limit = 10): Collection;
+
+    /**
+     * Get total sales amount.
+     */
+    public function getTotalSales(?string $startDate = null, ?string $endDate = null): float;
 
     /**
      * Check if order exists by ID.

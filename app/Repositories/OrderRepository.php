@@ -9,7 +9,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Lunar\Models\Order;
 
-final class EloquentOrderRepository implements OrderRepositoryInterface
+final class OrderRepository implements OrderRepositoryInterface
 {
     /**
      * Find an order by ID.
@@ -99,12 +99,17 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
     /**
      * Get orders within date range.
      */
-    public function getByDateRange(\DateTimeInterface $startDate, \DateTimeInterface $endDate): Collection
+    public function getByDateRange(string $startDate, string $endDate, ?int $limit = null): Collection
     {
-        return Order::query()
+        $query = Order::query()
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->orderBy('created_at', 'desc')
-            ->get();
+            ->orderBy('created_at', 'desc');
+
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query->get();
     }
 
     /**
@@ -181,7 +186,7 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
     /**
      * Get order totals for a period.
      */
-    public function getTotalsByPeriod(\DateTimeInterface $startDate, \DateTimeInterface $endDate): array
+    public function getTotalsByPeriod(string $startDate, string $endDate): array
     {
         $orders = $this->getByDateRange($startDate, $endDate);
 
@@ -203,6 +208,21 @@ final class EloquentOrderRepository implements OrderRepositoryInterface
             ->orderBy('created_at', 'desc')
             ->limit($limit)
             ->get();
+    }
+
+    /**
+     * Get total sales amount.
+     */
+    public function getTotalSales(?string $startDate = null, ?string $endDate = null): float
+    {
+        $query = Order::query()
+            ->whereNotIn('status', ['cancelled', 'failed', 'refunded']);
+
+        if ($startDate && $endDate) {
+            $query->whereBetween('created_at', [$startDate, $endDate]);
+        }
+
+        return (float) $query->sum('total');
     }
 
     /**

@@ -11,7 +11,7 @@ use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\Http;
 
-final class EloquentCustomerRepository implements CustomerRepositoryInterface
+final class CustomerRepository implements CustomerRepositoryInterface
 {
     /**
      * Find a customer by ID.
