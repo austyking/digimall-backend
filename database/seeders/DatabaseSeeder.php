@@ -15,6 +15,11 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
+        // Seed tenants first
+        $this->call([
+            TenantSeeder::class,
+        ]);
+
         // User::factory(10)->create();
 
         User::factory()->create([
