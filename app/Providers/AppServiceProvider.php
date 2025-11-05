@@ -16,6 +16,8 @@ use App\Repositories\OrderRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\TenantRepository;
 use App\Repositories\VendorRepository;
+use App\Services\AdminTenantService;
+use App\Services\TenantStatisticsService;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
 use Lunar\Admin\Support\Facades\LunarPanel;
@@ -36,6 +38,10 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(OrderRepositoryInterface::class, OrderRepository::class);
         $this->app->bind(VendorRepositoryInterface::class, VendorRepository::class);
         $this->app->bind(CustomerRepositoryInterface::class, CustomerRepository::class);
+
+        // Register Admin services
+        $this->app->singleton(AdminTenantService::class);
+        $this->app->singleton(TenantStatisticsService::class);
     }
 
     /**

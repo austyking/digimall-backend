@@ -25,7 +25,7 @@ class Tenant extends BaseTenant
             'display_name',
             'description',
             'logo_url',
-            'active',
+            'status',
             'settings',
         ];
     }
@@ -59,7 +59,6 @@ class Tenant extends BaseTenant
     protected $casts = [
         'settings' => 'array',
         'data' => 'array',
-        'active' => 'boolean',
     ];
 
     /**
@@ -92,5 +91,37 @@ class Tenant extends BaseTenant
             'primary_color' => $this->getSetting('theme.primary_color', '#1976d2'),
             'secondary_color' => $this->getSetting('theme.secondary_color', '#dc004e'),
         ];
+    }
+
+    /**
+     * Check if the tenant is active.
+     */
+    public function isActive(): bool
+    {
+        return $this->status === 'active';
+    }
+
+    /**
+     * Check if the tenant is inactive.
+     */
+    public function isInactive(): bool
+    {
+        return $this->status === 'inactive';
+    }
+
+    /**
+     * Activate the tenant.
+     */
+    public function activate(): void
+    {
+        $this->update(['status' => 'active']);
+    }
+
+    /**
+     * Deactivate the tenant.
+     */
+    public function deactivate(): void
+    {
+        $this->update(['status' => 'inactive']);
     }
 }

@@ -33,7 +33,7 @@ final class TenantFactory extends Factory
             'display_name' => $this->faker->company(),
             'description' => $this->faker->optional()->paragraph(),
             'logo_url' => $this->faker->optional()->imageUrl(200, 200, 'business'),
-            'active' => true,
+            'status' => 'active',
             'settings' => [
                 'theme' => [
                     'primary_color' => $this->faker->hexColor(),
@@ -59,7 +59,7 @@ final class TenantFactory extends Factory
     public function inactive(): static
     {
         return $this->state(fn (array $attributes) => [
-            'active' => false,
+            'status' => 'inactive',
         ]);
     }
 

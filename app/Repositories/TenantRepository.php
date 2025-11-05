@@ -39,7 +39,7 @@ final class TenantRepository implements TenantRepositoryInterface
      */
     public function allActive(): Collection
     {
-        return Tenant::query()->where('active', true)->get();
+        return Tenant::query()->where('status', 'active')->get();
     }
 
     /**
@@ -92,14 +92,14 @@ final class TenantRepository implements TenantRepositoryInterface
      */
     public function allInactive(): Collection
     {
-        return Tenant::query()->where('active', false)->get();
+        return Tenant::query()->where('status', 'inactive')->get();
     }
 
     /**
      * Get filtered and paginated tenants.
      */
     public function getFiltered(
-        ?bool $active = null,
+        ?string $status = null,
         ?string $search = null,
         string $sortBy = 'created_at',
         string $sortDirection = 'desc',
@@ -107,9 +107,9 @@ final class TenantRepository implements TenantRepositoryInterface
     ) {
         $query = Tenant::query();
 
-        // Apply active filter
-        if ($active !== null) {
-            $query->where('active', $active);
+        // Apply status filter
+        if ($status !== null) {
+            $query->where('status', $status);
         }
 
         // Apply search filter
@@ -117,7 +117,6 @@ final class TenantRepository implements TenantRepositoryInterface
             $query->where(function ($q) use ($search) {
                 $q->where('name', 'LIKE', "%{$search}%")
                     ->orWhere('display_name', 'LIKE', "%{$search}%")
-                    ->orWhere('subdomain', 'LIKE', "%{$search}%")
                     ->orWhere('description', 'LIKE', "%{$search}%");
             });
         }
@@ -141,7 +140,7 @@ final class TenantRepository implements TenantRepositoryInterface
      */
     public function countActive(): int
     {
-        return Tenant::query()->where('active', true)->count();
+        return Tenant::query()->where('status', 'active')->count();
     }
 
     /**
@@ -149,21 +148,21 @@ final class TenantRepository implements TenantRepositoryInterface
      */
     public function countInactive(): int
     {
-        return Tenant::query()->where('active', false)->count();
+        return Tenant::query()->where('status', 'inactive')->count();
     }
 
     /**
      * Update tenant status.
      */
-    public function updateStatus(Tenant $tenant, bool $active, ?string $reason = null): Tenant
+    public function updateStatus(Tenant $tenant, string $status, ?string $reason = null): Tenant
     {
-        $updateData = ['active' => $active];
+        $updateData = ['status' => $status];
 
         if ($reason) {
             $settings = $tenant->settings ?? [];
             $settings['status_history'] = $settings['status_history'] ?? [];
             $settings['status_history'][] = [
-                'status' => $active ? 'activated' : 'deactivated',
+                'status' => $status,
                 'reason' => $reason,
                 'timestamp' => now()->toISOString(),
             ];
@@ -178,11 +177,11 @@ final class TenantRepository implements TenantRepositoryInterface
     /**
      * Bulk update tenant statuses.
      */
-    public function bulkUpdateStatus(array $tenantIds, bool $active, ?string $reason = null): int
+    public function bulkUpdateStatus(array $tenantIds, string $status, ?string $reason = null): int
     {
         return Tenant::query()
             ->whereIn('id', $tenantIds)
-            ->update(['active' => $active]);
+            ->update(['status' => $status]);
     }
 
     /**
@@ -222,14 +221,14 @@ final class TenantRepository implements TenantRepositoryInterface
      * Get tenant IDs by status from a list of IDs.
      *
      * @param  array  $tenantIds  List of tenant IDs to filter
-     * @param  bool  $active  Status to filter by
+     * @param  string  $status  Status to filter by ('active' or 'inactive')
      * @return array List of tenant IDs matching the status
      */
-    public function getIdsByStatus(array $tenantIds, bool $active): array
+    public function getIdsByStatus(array $tenantIds, string $status): array
     {
         return Tenant::query()
             ->whereIn('id', $tenantIds)
-            ->where('active', $active)
+            ->where('status', $status)
             ->pluck('id')
             ->toArray();
     }

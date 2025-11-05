@@ -63,7 +63,7 @@ interface TenantRepositoryInterface
      * Get filtered and paginated tenants.
      */
     public function getFiltered(
-        ?bool $active = null,
+        ?string $status = null,
         ?string $search = null,
         string $sortBy = 'created_at',
         string $sortDirection = 'desc',
@@ -88,12 +88,12 @@ interface TenantRepositoryInterface
     /**
      * Update tenant status.
      */
-    public function updateStatus(Tenant $tenant, bool $active, ?string $reason = null): Tenant;
+    public function updateStatus(Tenant $tenant, string $status, ?string $reason = null): Tenant;
 
     /**
      * Bulk update tenant statuses.
      */
-    public function bulkUpdateStatus(array $tenantIds, bool $active, ?string $reason = null): int;
+    public function bulkUpdateStatus(array $tenantIds, string $status, ?string $reason = null): int;
 
     /**
      * Get count of tenants created since a specific date.
@@ -112,8 +112,8 @@ interface TenantRepositoryInterface
      * Get tenant IDs by status from a list of IDs.
      *
      * @param  array  $tenantIds  List of tenant IDs to filter
-     * @param  bool  $active  Status to filter by
+     * @param  string  $status  Status to filter by ('active' or 'inactive')
      * @return array List of tenant IDs matching the status
      */
-    public function getIdsByStatus(array $tenantIds, bool $active): array;
+    public function getIdsByStatus(array $tenantIds, string $status): array;
 }

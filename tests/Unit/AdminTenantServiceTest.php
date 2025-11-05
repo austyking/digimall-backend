@@ -19,12 +19,12 @@ beforeEach(function () {
 describe('AdminTenantService Unit Tests', function () {
     describe('getFilteredTenants()', function () {
         test('delegates to repository with correct parameters', function () {
-            $filterDTO = new TenantFilterDTO(active: true, search: 'test', sortBy: 'name', sortDirection: 'asc', perPage: 20);
+            $filterDTO = new TenantFilterDTO(status: 'active', search: 'test', sortBy: 'name', sortDirection: 'asc', perPage: 20);
             $mockPaginator = mock(LengthAwarePaginator::class);
 
             $this->mockRepository
                 ->expects('getFiltered')
-                ->with(true, 'test', 'name', 'asc', 20)
+                ->with('active', 'test', 'name', 'asc', 20)
                 ->andReturn($mockPaginator);
 
             $result = $this->service->getFilteredTenants($filterDTO);
@@ -35,23 +35,23 @@ describe('AdminTenantService Unit Tests', function () {
 
     describe('activateTenant()', function () {
         test('activates inactive tenant and calls repository', function () {
-            $tenant = new Tenant(['id' => 'test-id', 'active' => false]);
-            $dto = new ActivateTenantDTO(reason: 'Approved by admin');
-            $activatedTenant = new Tenant(['id' => 'test-id', 'active' => true]);
+            $tenant = new Tenant(['id' => 'test-id', 'status' => 'inactive']);
+            $dto = new ActivateTenantDTO(tenantId: 'test-id', reason: 'Approved by admin');
+            $activatedTenant = new Tenant(['id' => 'test-id', 'status' => 'active']);
 
             $this->mockRepository
                 ->expects('updateStatus')
-                ->with($tenant, true, 'Approved by admin')
+                ->with($tenant, 'active', 'Approved by admin')
                 ->andReturn($activatedTenant);
 
             $result = $this->service->activateTenant($tenant, $dto);
 
-            expect($result->active)->toBeTrue();
+            expect($result->status)->toBe('active');
         });
 
         test('throws exception when tenant already active', function () {
-            $tenant = new Tenant(['id' => 'test-id', 'active' => true]);
-            $dto = new ActivateTenantDTO(reason: 'Test');
+            $tenant = new Tenant(['id' => 'test-id', 'status' => 'active']);
+            $dto = new ActivateTenantDTO(tenantId: 'test-id', reason: 'Test');
 
             expect(fn () => $this->service->activateTenant($tenant, $dto))
                 ->toThrow(\InvalidArgumentException::class, 'Tenant is already active');
@@ -60,23 +60,23 @@ describe('AdminTenantService Unit Tests', function () {
 
     describe('deactivateTenant()', function () {
         test('deactivates active tenant and calls repository', function () {
-            $tenant = new Tenant(['id' => 'test-id', 'active' => true]);
-            $dto = new DeactivateTenantDTO(reason: 'Policy violation');
-            $deactivatedTenant = new Tenant(['id' => 'test-id', 'active' => false]);
+            $tenant = new Tenant(['id' => 'test-id', 'status' => 'active']);
+            $dto = new DeactivateTenantDTO(tenantId: 'test-id', reason: 'Policy violation');
+            $deactivatedTenant = new Tenant(['id' => 'test-id', 'status' => 'inactive']);
 
             $this->mockRepository
                 ->expects('updateStatus')
-                ->with($tenant, false, 'Policy violation')
+                ->with($tenant, 'inactive', 'Policy violation')
                 ->andReturn($deactivatedTenant);
 
             $result = $this->service->deactivateTenant($tenant, $dto);
 
-            expect($result->active)->toBeFalse();
+            expect($result->status)->toBe('inactive');
         });
 
         test('throws exception when tenant already inactive', function () {
-            $tenant = new Tenant(['id' => 'test-id', 'active' => false]);
-            $dto = new DeactivateTenantDTO(reason: 'Test');
+            $tenant = new Tenant(['id' => 'test-id', 'status' => 'inactive']);
+            $dto = new DeactivateTenantDTO(tenantId: 'test-id', reason: 'Test');
 
             expect(fn () => $this->service->deactivateTenant($tenant, $dto))
                 ->toThrow(\InvalidArgumentException::class, 'Tenant is already inactive');
@@ -106,7 +106,7 @@ describe('AdminTenantService Unit Tests', function () {
 
     describe('getInactiveTenants()', function () {
         test('delegates to repository', function () {
-            $inactiveTenants = collect([new Tenant(['active' => false])]);
+            $inactiveTenants = collect([new Tenant(['status' => 'inactive'])]);
 
             $this->mockRepository
                 ->expects('allInactive')

@@ -15,17 +15,17 @@ beforeEach(function () {
 describe('TenantRepository Admin Methods', function () {
     describe('allInactive()', function () {
         test('returns only inactive tenants', function () {
-            Tenant::factory()->count(3)->create(['active' => true]);
-            Tenant::factory()->count(2)->create(['active' => false]);
+            Tenant::factory()->count(3)->create(['status' => 'active']);
+            Tenant::factory()->count(2)->create(['status' => 'inactive']);
 
             $result = $this->repository->allInactive();
 
             expect($result)->toHaveCount(2)
-                ->and($result->every(fn ($tenant) => $tenant->active === false))->toBeTrue();
+                ->and($result->every(fn ($tenant) => $tenant->status === 'inactive'))->toBeTrue();
         });
 
         test('returns empty collection when no inactive tenants', function () {
-            Tenant::factory()->count(3)->create(['active' => true]);
+            Tenant::factory()->count(3)->create(['status' => 'active']);
 
             $result = $this->repository->allInactive();
 
@@ -35,28 +35,28 @@ describe('TenantRepository Admin Methods', function () {
 
     describe('getFiltered()', function () {
         test('filters tenants by active status', function () {
-            Tenant::factory()->count(5)->create(['active' => true]);
-            Tenant::factory()->count(3)->create(['active' => false]);
+            Tenant::factory()->count(5)->create(['status' => 'active']);
+            Tenant::factory()->count(3)->create(['status' => 'inactive']);
 
-            $result = $this->repository->getFiltered(active: true);
+            $result = $this->repository->getFiltered(status: 'active');
 
             expect($result->total())->toBe(5);
 
             foreach ($result->items() as $item) {
-                expect($item->active)->toBeTrue();
+                expect($item->status)->toBe('active');
             }
         });
 
         test('filters tenants by inactive status', function () {
-            Tenant::factory()->count(5)->create(['active' => true]);
-            Tenant::factory()->count(3)->create(['active' => false]);
+            Tenant::factory()->count(5)->create(['status' => 'active']);
+            Tenant::factory()->count(3)->create(['status' => 'inactive']);
 
-            $result = $this->repository->getFiltered(active: false);
+            $result = $this->repository->getFiltered(status: 'inactive');
 
             expect($result->total())->toBe(3);
 
             foreach ($result->items() as $item) {
-                expect($item->active)->toBeFalse();
+                expect($item->status)->toBe('inactive');
             }
         });
 
@@ -80,12 +80,12 @@ describe('TenantRepository Admin Methods', function () {
                 ->and($result->first()->display_name)->toContain('Medical');
         });
 
-        test('combines active filter and search', function () {
-            Tenant::factory()->create(['name' => 'GRNMA', 'active' => true]);
-            Tenant::factory()->create(['name' => 'GMA', 'active' => true]);
-            Tenant::factory()->create(['name' => 'GMDA', 'active' => false]);
+        test('combines status filter and search', function () {
+            Tenant::factory()->create(['name' => 'GRNMA', 'status' => 'active']);
+            Tenant::factory()->create(['name' => 'GMA', 'status' => 'active']);
+            Tenant::factory()->create(['name' => 'GMDA', 'status' => 'inactive']);
 
-            $result = $this->repository->getFiltered(active: true, search: 'GM');
+            $result = $this->repository->getFiltered(status: 'active', search: 'GM');
 
             expect($result->total())->toBe(1)
                 ->and($result->first()->name)->toBe('GMA');
@@ -112,8 +112,8 @@ describe('TenantRepository Admin Methods', function () {
         });
 
         test('returns all tenants when no filters applied', function () {
-            Tenant::factory()->count(5)->create(['active' => true]);
-            Tenant::factory()->count(3)->create(['active' => false]);
+            Tenant::factory()->count(5)->create(['status' => 'active']);
+            Tenant::factory()->count(3)->create(['status' => 'inactive']);
 
             $result = $this->repository->getFiltered();
 
@@ -123,8 +123,8 @@ describe('TenantRepository Admin Methods', function () {
 
     describe('count methods', function () {
         test('count returns total tenant count', function () {
-            Tenant::factory()->count(5)->create(['active' => true]);
-            Tenant::factory()->count(3)->create(['active' => false]);
+            Tenant::factory()->count(5)->create(['status' => 'active']);
+            Tenant::factory()->count(3)->create(['status' => 'inactive']);
 
             $result = $this->repository->count();
 
@@ -132,8 +132,8 @@ describe('TenantRepository Admin Methods', function () {
         });
 
         test('countActive returns active tenant count', function () {
-            Tenant::factory()->count(5)->create(['active' => true]);
-            Tenant::factory()->count(3)->create(['active' => false]);
+            Tenant::factory()->count(5)->create(['status' => 'active']);
+            Tenant::factory()->count(3)->create(['status' => 'inactive']);
 
             $result = $this->repository->countActive();
 
@@ -141,8 +141,8 @@ describe('TenantRepository Admin Methods', function () {
         });
 
         test('countInactive returns inactive tenant count', function () {
-            Tenant::factory()->count(5)->create(['active' => true]);
-            Tenant::factory()->count(3)->create(['active' => false]);
+            Tenant::factory()->count(5)->create(['status' => 'active']);
+            Tenant::factory()->count(3)->create(['status' => 'inactive']);
 
             $result = $this->repository->countInactive();
 
@@ -158,54 +158,54 @@ describe('TenantRepository Admin Methods', function () {
 
     describe('updateStatus()', function () {
         test('updates tenant status to active', function () {
-            $tenant = Tenant::factory()->create(['active' => false]);
+            $tenant = Tenant::factory()->create(['status' => 'inactive']);
 
-            $result = $this->repository->updateStatus($tenant, true);
+            $result = $this->repository->updateStatus($tenant, 'active');
 
-            expect($result->active)->toBeTrue()
+            expect($result->status)->toBe('active')
                 ->and($result->id)->toBe($tenant->id);
         });
 
         test('updates tenant status to inactive', function () {
-            $tenant = Tenant::factory()->create(['active' => true]);
+            $tenant = Tenant::factory()->create(['status' => 'active']);
 
-            $result = $this->repository->updateStatus($tenant, false);
+            $result = $this->repository->updateStatus($tenant, 'inactive');
 
-            expect($result->active)->toBeFalse();
+            expect($result->status)->toBe('inactive');
         });
 
         test('stores status change reason in settings', function () {
-            $tenant = Tenant::factory()->create(['active' => false]);
+            $tenant = Tenant::factory()->create(['status' => 'inactive']);
 
-            $result = $this->repository->updateStatus($tenant, true, 'Approved by admin');
+            $result = $this->repository->updateStatus($tenant, 'active', 'Approved by admin');
 
             expect($result->settings)->toHaveKey('status_history')
                 ->and($result->settings['status_history'])->toHaveCount(1)
-                ->and($result->settings['status_history'][0]['status'])->toBe('activated')
+                ->and($result->settings['status_history'][0]['status'])->toBe('active')
                 ->and($result->settings['status_history'][0]['reason'])->toBe('Approved by admin');
         });
 
         test('appends to existing status history', function () {
             $tenant = Tenant::factory()->create([
-                'active' => true,
+                'status' => 'active',
                 'settings' => [
                     'status_history' => [
-                        ['status' => 'activated', 'reason' => 'Initial setup', 'timestamp' => now()->subDay()->toISOString()],
+                        ['status' => 'active', 'reason' => 'Initial setup', 'timestamp' => now()->subDay()->toISOString()],
                     ],
                 ],
             ]);
 
-            $result = $this->repository->updateStatus($tenant, false, 'Policy violation');
+            $result = $this->repository->updateStatus($tenant, 'inactive', 'Policy violation');
 
             expect($result->settings['status_history'])->toHaveCount(2)
-                ->and($result->settings['status_history'][1]['status'])->toBe('deactivated')
+                ->and($result->settings['status_history'][1]['status'])->toBe('inactive')
                 ->and($result->settings['status_history'][1]['reason'])->toBe('Policy violation');
         });
 
         test('does not modify settings when no reason provided', function () {
-            $tenant = Tenant::factory()->create(['active' => false, 'settings' => ['foo' => 'bar']]);
+            $tenant = Tenant::factory()->create(['status' => 'inactive', 'settings' => ['foo' => 'bar']]);
 
-            $result = $this->repository->updateStatus($tenant, true);
+            $result = $this->repository->updateStatus($tenant, 'active');
 
             expect($result->settings)->toBe(['foo' => 'bar']);
         });
@@ -213,39 +213,39 @@ describe('TenantRepository Admin Methods', function () {
 
     describe('bulkUpdateStatus()', function () {
         test('updates status for multiple tenants', function () {
-            $tenants = Tenant::factory()->count(5)->create(['active' => false]);
+            $tenants = Tenant::factory()->count(5)->create(['status' => 'inactive']);
             $tenantIds = $tenants->pluck('id')->toArray();
 
-            $affectedCount = $this->repository->bulkUpdateStatus($tenantIds, true);
+            $affectedCount = $this->repository->bulkUpdateStatus($tenantIds, 'active');
 
             expect($affectedCount)->toBe(5)
-                ->and(Tenant::whereIn('id', $tenantIds)->where('active', true)->count())->toBe(5);
+                ->and(Tenant::whereIn('id', $tenantIds)->where('status', 'active')->count())->toBe(5);
         });
 
         test('only updates specified tenants', function () {
-            $targetTenants = Tenant::factory()->count(3)->create(['active' => false]);
-            $otherTenants = Tenant::factory()->count(2)->create(['active' => false]);
+            $targetTenants = Tenant::factory()->count(3)->create(['status' => 'inactive']);
+            $otherTenants = Tenant::factory()->count(2)->create(['status' => 'inactive']);
 
-            $affectedCount = $this->repository->bulkUpdateStatus($targetTenants->pluck('id')->toArray(), true);
+            $affectedCount = $this->repository->bulkUpdateStatus($targetTenants->pluck('id')->toArray(), 'active');
 
             expect($affectedCount)->toBe(3)
-                ->and($targetTenants->fresh()->every(fn ($t) => $t->active === true))->toBeTrue()
-                ->and($otherTenants->fresh()->every(fn ($t) => $t->active === false))->toBeTrue();
+                ->and($targetTenants->fresh()->every(fn ($t) => $t->status === 'active'))->toBeTrue()
+                ->and($otherTenants->fresh()->every(fn ($t) => $t->status === 'inactive'))->toBeTrue();
         });
 
         test('returns zero when no tenant IDs provided', function () {
-            Tenant::factory()->count(3)->create(['active' => false]);
+            Tenant::factory()->count(3)->create(['status' => 'inactive']);
 
-            $affectedCount = $this->repository->bulkUpdateStatus([], true);
+            $affectedCount = $this->repository->bulkUpdateStatus([], 'active');
 
             expect($affectedCount)->toBe(0);
         });
 
         test('handles non-existent tenant IDs gracefully', function () {
-            $existingTenant = Tenant::factory()->create(['active' => false]);
+            $existingTenant = Tenant::factory()->create(['status' => 'inactive']);
             $nonExistentId = 'non-existent-uuid';
 
-            $affectedCount = $this->repository->bulkUpdateStatus([$existingTenant->id, $nonExistentId], true);
+            $affectedCount = $this->repository->bulkUpdateStatus([$existingTenant->id, $nonExistentId], 'active');
 
             expect($affectedCount)->toBe(1);
         });

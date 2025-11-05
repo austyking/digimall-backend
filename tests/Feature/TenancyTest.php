@@ -146,23 +146,23 @@ describe('TenantRepository', function () {
     test('gets all tenants', function () {
         $tenants = $this->tenantRepository->all();
 
-        expect($tenants)->toHaveCount(2) // GRNMA and GMA from seeder
+        expect($tenants)->toHaveCount(9) // All tenants from seeder (7 active, 2 inactive)
             ->and($tenants->first())->toBeInstanceOf(Tenant::class);
     });
 
     test('gets only active tenants', function () {
-        // Create inactive tenant
+        // Create additional inactive tenant for testing
         Tenant::create([
             'id' => Str::uuid()->toString(),
-            'name' => 'INACTIVE',
-            'display_name' => 'Inactive Tenant',
-            'active' => false,
+            'name' => 'INACTIVE_TEST',
+            'display_name' => 'Inactive Test Tenant',
+            'status' => 'inactive',
         ]);
 
         $activeTenants = $this->tenantRepository->allActive();
 
-        expect($activeTenants)->toHaveCount(2) // Only GRNMA and GMA
-            ->and($activeTenants->every(fn ($t) => $t->active))->toBeTrue();
+        expect($activeTenants)->toHaveCount(7) // 7 active tenants from seeder
+            ->and($activeTenants->every(fn ($t) => $t->status === 'active'))->toBeTrue();
     });
 
     test('creates tenant through repository', function () {

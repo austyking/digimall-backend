@@ -28,7 +28,7 @@ final class AdminTenantService
     public function getFilteredTenants(TenantFilterDTO $filterDTO): LengthAwarePaginator
     {
         return $this->tenantRepository->getFiltered(
-            active: $filterDTO->active,
+            status: $filterDTO->status,
             search: $filterDTO->search,
             sortBy: $filterDTO->sortBy ?? 'created_at',
             sortDirection: $filterDTO->sortDirection ?? 'desc',
@@ -41,11 +41,11 @@ final class AdminTenantService
      */
     public function activateTenant(Tenant $tenant, ActivateTenantDTO $dto): Tenant
     {
-        if ($tenant->active) {
+        if ($tenant->isActive()) {
             throw new \InvalidArgumentException('Tenant is already active');
         }
 
-        return $this->tenantRepository->updateStatus($tenant, true, $dto->reason);
+        return $this->tenantRepository->updateStatus($tenant, 'active', $dto->reason);
     }
 
     /**
@@ -53,11 +53,11 @@ final class AdminTenantService
      */
     public function deactivateTenant(Tenant $tenant, DeactivateTenantDTO $dto): Tenant
     {
-        if (! $tenant->active) {
+        if ($tenant->isInactive()) {
             throw new \InvalidArgumentException('Tenant is already inactive');
         }
 
-        return $this->tenantRepository->updateStatus($tenant, false, $dto->reason);
+        return $this->tenantRepository->updateStatus($tenant, 'inactive', $dto->reason);
     }
 
     /**
@@ -66,13 +66,13 @@ final class AdminTenantService
     public function bulkActivateTenants(array $tenantIds, ActivateTenantDTO $dto): int
     {
         // Filter to only include inactive tenants
-        $inactiveTenants = $this->tenantRepository->getIdsByStatus($tenantIds, false);
+        $inactiveTenants = $this->tenantRepository->getIdsByStatus($tenantIds, 'inactive');
 
         if (empty($inactiveTenants)) {
             return 0;
         }
 
-        return $this->tenantRepository->bulkUpdateStatus($inactiveTenants, true, $dto->reason);
+        return $this->tenantRepository->bulkUpdateStatus($inactiveTenants, 'active', $dto->reason);
     }
 
     /**
@@ -81,13 +81,13 @@ final class AdminTenantService
     public function bulkDeactivateTenants(array $tenantIds, DeactivateTenantDTO $dto): int
     {
         // Filter to only include active tenants
-        $activeTenants = $this->tenantRepository->getIdsByStatus($tenantIds, true);
+        $activeTenants = $this->tenantRepository->getIdsByStatus($tenantIds, 'active');
 
         if (empty($activeTenants)) {
             return 0;
         }
 
-        return $this->tenantRepository->bulkUpdateStatus($activeTenants, false, $dto->reason);
+        return $this->tenantRepository->bulkUpdateStatus($activeTenants, 'inactive', $dto->reason);
     }
 
     /**
