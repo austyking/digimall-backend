@@ -5,12 +5,16 @@ declare(strict_types=1);
 use App\Http\Controllers\Api\Tenant\ShowTenantBrandingController;
 use App\Http\Controllers\Api\Tenant\ShowTenantConfigController;
 use App\Http\Controllers\Api\TenantController;
+use App\Http\Controllers\Api\V1\Auth\LoginController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 
 // API v1 routes with tenant middleware
 Route::prefix('v1')->middleware([InitializeTenancyByDomain::class])->group(function (): void {
+
+    // Authentication routes (public)
+    Route::post('/auth/login', LoginController::class)->name('auth.login');
 
     // Tenant configuration endpoints
     Route::get('/config', ShowTenantConfigController::class);

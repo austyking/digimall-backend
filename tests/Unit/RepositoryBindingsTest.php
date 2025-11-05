@@ -2,6 +2,8 @@
 
 declare(strict_types=1);
 
+use App\Repositories\AuthRepository;
+use App\Repositories\Contracts\AuthRepositoryInterface;
 use App\Repositories\Contracts\CustomerRepositoryInterface;
 use App\Repositories\Contracts\OrderRepositoryInterface;
 use App\Repositories\Contracts\ProductRepositoryInterface;
@@ -17,6 +19,12 @@ use Tests\TestCase;
 uses(TestCase::class);
 
 describe('Repository Bindings', function () {
+    test('resolves AuthRepository from container', function () {
+        $repository = $this->app->make(AuthRepositoryInterface::class);
+
+        expect($repository)->toBeInstanceOf(AuthRepository::class);
+    });
+
     test('resolves TenantRepository from container', function () {
         $repository = $this->app->make(TenantRepositoryInterface::class);
 

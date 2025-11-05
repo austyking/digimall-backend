@@ -31,3 +31,4 @@ _ide_helper_models.php
 
 # PHPStan
 storage/phpstan
+/package.xml
