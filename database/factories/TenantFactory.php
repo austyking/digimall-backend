@@ -29,7 +29,7 @@ final class TenantFactory extends Factory
     {
         return [
             'id' => Str::uuid()->toString(),
-            'name' => strtoupper($this->faker->unique()->lexify('???')),
+            'name' => strtoupper($this->faker->unique()->bothify('???')),
             'display_name' => $this->faker->company(),
             'description' => $this->faker->optional()->paragraph(),
             'logo_url' => $this->faker->optional()->imageUrl(200, 200, 'business'),

@@ -53,4 +53,67 @@ interface TenantRepositoryInterface
      * Search tenants by name.
      */
     public function search(string $query): Collection;
+
+    /**
+     * Get all inactive tenants.
+     */
+    public function allInactive(): Collection;
+
+    /**
+     * Get filtered and paginated tenants.
+     */
+    public function getFiltered(
+        ?bool $active = null,
+        ?string $search = null,
+        string $sortBy = 'created_at',
+        string $sortDirection = 'desc',
+        int $perPage = 15
+    );
+
+    /**
+     * Count total tenants.
+     */
+    public function count(): int;
+
+    /**
+     * Count active tenants.
+     */
+    public function countActive(): int;
+
+    /**
+     * Count inactive tenants.
+     */
+    public function countInactive(): int;
+
+    /**
+     * Update tenant status.
+     */
+    public function updateStatus(Tenant $tenant, bool $active, ?string $reason = null): Tenant;
+
+    /**
+     * Bulk update tenant statuses.
+     */
+    public function bulkUpdateStatus(array $tenantIds, bool $active, ?string $reason = null): int;
+
+    /**
+     * Get count of tenants created since a specific date.
+     */
+    public function countCreatedSince(\DateTimeInterface $date): int;
+
+    /**
+     * Get tenant distribution by creation date (for charts).
+     *
+     * @param  int  $days  Number of days to look back
+     * @return array<string, int> Date => count mapping
+     */
+    public function getDistributionByDate(int $days = 30): array;
+
+    /**
+     * Get tenant IDs by status from a list of IDs.
+     *
+     * @param  array  $tenantIds  List of tenant IDs to filter
+     * @param  bool  $active  Status to filter by
+     * @return array List of tenant IDs matching the status
+     */
+    public function getIdsByStatus(array $tenantIds, bool $active): array;
 }
