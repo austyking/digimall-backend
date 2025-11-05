@@ -4,17 +4,20 @@ declare(strict_types=1);
 
 namespace App\Models;
 
+use Database\Factories\UserFactory;
+use Illuminate\Database\Eloquent\Concerns\HasUuids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Notifications\Notifiable;
 use Lunar\Base\LunarUser as LunarUserInterface;
 use Lunar\Base\Traits\LunarUser;
+use Spatie\Permission\Traits\HasRoles;
 
 class User extends Authenticatable implements LunarUserInterface
 {
-    /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    /** @use HasFactory<UserFactory> */
+    use HasFactory, HasRoles, HasUuids, Notifiable;
 
     use LunarUser;
 
@@ -27,6 +30,7 @@ class User extends Authenticatable implements LunarUserInterface
         'name',
         'email',
         'password',
+        'email_verified_at',
     ];
 
     /**

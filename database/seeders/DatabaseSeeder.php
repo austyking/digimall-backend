@@ -19,6 +19,7 @@ class DatabaseSeeder extends Seeder
     {
         // Seed tenants first
         $this->call([
+            RolesAndPermissionsSeeder::class,
             TenantSeeder::class,
         ]);
 
