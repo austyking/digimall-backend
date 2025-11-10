@@ -113,34 +113,15 @@ describe('AdminTenantController Feature Tests', function () {
                 ->assertJsonValidationErrors(['description']);
         });
 
-        test('validates branding primary_color format', function () {
+        test('validates theme color format', function () {
             $response = $this->postJson('/api/v1/admin/tenants', [
                 'name' => 'TEST',
                 'display_name' => 'Test',
-                'settings' => [
-                    'branding' => [
-                        'primary_color' => 'invalid-color',
-                    ],
-                ],
+                'theme_primary_color' => 'invalid-color',
             ]);
 
             $response->assertStatus(422)
-                ->assertJsonValidationErrors(['settings.branding.primary_color']);
-        });
-
-        test('validates branding logo_url format', function () {
-            $response = $this->postJson('/api/v1/admin/tenants', [
-                'name' => 'TEST',
-                'display_name' => 'Test',
-                'settings' => [
-                    'branding' => [
-                        'logo_url' => 'not-a-url',
-                    ],
-                ],
-            ]);
-
-            $response->assertStatus(422)
-                ->assertJsonValidationErrors(['settings.branding.logo_url']);
+                ->assertJsonValidationErrors(['theme_primary_color']);
         });
 
         test('creates tenant successfully with minimal data', function () {
@@ -181,26 +162,18 @@ describe('AdminTenantController Feature Tests', function () {
                 'name' => 'GMA',
                 'display_name' => 'Ghana Medical Association',
                 'description' => 'Association for medical professionals',
-                'settings' => [
-                    'branding' => [
-                        'primary_color' => '#1976d2',
-                        'logo_url' => 'https://example.com/logo.png',
-                    ],
-                    'features' => [
-                        'hire_purchase_enabled' => true,
-                        'cross_association_sync_enabled' => false,
-                    ],
-                ],
+                'theme_primary_color' => '#1976d2',
+                'hire_purchase_enabled' => true,
             ]);
 
             $response->assertCreated()
                 ->assertJsonPath('data.name', 'GMA')
                 ->assertJsonPath('data.description', 'Association for medical professionals')
-                ->assertJsonPath('data.settings.branding.primary_color', '#1976d2')
+                ->assertJsonPath('data.settings.theme.primary_color', '#1976d2')
                 ->assertJsonPath('data.settings.features.hire_purchase_enabled', true);
 
             $tenant = Tenant::where('name', 'GMA')->first();
-            expect($tenant->settings['branding']['primary_color'])->toBe('#1976d2')
+            expect($tenant->settings['theme']['primary_color'])->toBe('#1976d2')
                 ->and($tenant->settings['features']['hire_purchase_enabled'])->toBe(true);
         });
 

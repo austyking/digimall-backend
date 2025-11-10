@@ -47,7 +47,34 @@ final class TenantRepository implements TenantRepositoryInterface
      */
     public function create(array $data): Tenant
     {
-        return Tenant::create($data);
+        return \DB::transaction(function () use ($data) {
+            // Extract domain (handled separately)
+            $domain = $data['domain'] ?? null;
+            unset($data['domain']);
+
+            // Extract and handle logo file upload
+            $logo = $data['logo'] ?? null;
+            unset($data['logo']);
+
+            // Create the tenant
+            $tenant = Tenant::create($data);
+
+            // Handle logo upload if present
+            if ($logo && $logo instanceof \Illuminate\Http\UploadedFile) {
+                // Store the logo in public disk under tenants/{tenant_id} folder
+                $path = $logo->store("tenants/{$tenant->id}", 'public');
+
+                // Update tenant with logo URL
+                $tenant->update(['logo_url' => \Storage::disk('public')->url($path)]);
+            }
+
+            // Create domain if provided
+            if ($domain) {
+                $tenant->domains()->create(['domain' => $domain]);
+            }
+
+            return $tenant->fresh(['domains']);
+        });
     }
 
     /**

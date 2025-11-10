@@ -15,6 +15,7 @@
         "laravel/passport": "^13.4",
         "laravel/tinker": "^2.10.1",
         "lunarphp/lunar": "^1.0",
+        "spatie/laravel-medialibrary": "^11.0",
         "stancl/tenancy": "^3.9"
     },
     "require-dev": {

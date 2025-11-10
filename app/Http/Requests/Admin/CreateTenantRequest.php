@@ -44,42 +44,56 @@ final class CreateTenantRequest extends FormRequest
                 'string',
                 'max:1000',
             ],
+            'domain' => [
+                'nullable',
+                'string',
+                'max:255',
+                'unique:domains,domain',
+            ],
             'active' => [
                 'boolean',
             ],
-            'settings' => [
-                'nullable',
-                'array',
-            ],
-            'settings.branding' => [
-                'nullable',
-                'array',
-            ],
-            'settings.branding.primary_color' => [
+            // Accept flat format from frontend
+            'theme_primary_color' => [
                 'nullable',
                 'string',
                 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
             ],
-            'settings.branding.secondary_color' => [
+            'theme_secondary_color' => [
                 'nullable',
                 'string',
                 'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
             ],
-            'settings.branding.logo_url' => [
+            'logo' => [
+                'nullable',
+                'file',
+                'image',
+                'max:5120', // 5MB in kilobytes
+                'mimes:jpeg,jpg,png,gif,webp',
+            ],
+            'hire_purchase_enabled' => [
+                'boolean',
+            ],
+            'vendor_registration_enabled' => [
+                'boolean',
+            ],
+            'multi_currency_enabled' => [
+                'boolean',
+            ],
+            'contact_email' => [
+                'nullable',
+                'email',
+                'max:255',
+            ],
+            'contact_phone' => [
                 'nullable',
                 'string',
-                'url',
-                'max:2048',
+                'max:50',
             ],
-            'settings.features' => [
+            'contact_address' => [
                 'nullable',
-                'array',
-            ],
-            'settings.features.hire_purchase_enabled' => [
-                'boolean',
-            ],
-            'settings.features.cross_association_sync_enabled' => [
-                'boolean',
+                'string',
+                'max:500',
             ],
         ];
     }
@@ -96,9 +110,8 @@ final class CreateTenantRequest extends FormRequest
             'name.unique' => 'An association with this name already exists',
             'name.regex' => 'Association name must be uppercase alphanumeric with underscores (e.g., GRNMA, GMA)',
             'display_name.required' => 'Display name is required',
-            'settings.branding.primary_color.regex' => 'Primary color must be a valid hex color code',
-            'settings.branding.secondary_color.regex' => 'Secondary color must be a valid hex color code',
-            'settings.branding.logo_url.url' => 'Logo URL must be a valid URL',
+            'settings.theme.primary_color.regex' => 'Primary color must be a valid hex color code',
+            'settings.theme.secondary_color.regex' => 'Secondary color must be a valid hex color code',
         ];
     }
 
@@ -112,9 +125,8 @@ final class CreateTenantRequest extends FormRequest
         return [
             'name' => 'association name',
             'display_name' => 'display name',
-            'settings.branding.primary_color' => 'primary color',
-            'settings.branding.secondary_color' => 'secondary color',
-            'settings.branding.logo_url' => 'logo URL',
+            'settings.theme.primary_color' => 'primary color',
+            'settings.theme.secondary_color' => 'secondary color',
         ];
     }
 }

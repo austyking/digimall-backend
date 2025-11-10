@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\Tenant\ShowTenantBrandingController;
 use App\Http\Controllers\Api\Tenant\ShowTenantConfigController;
-use App\Http\Controllers\Api\TenantController;
 use App\Http\Controllers\Api\V1\Admin\AdminTenantController;
 use App\Http\Controllers\Api\V1\Admin\TenantStatisticsController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
@@ -74,9 +73,4 @@ Route::prefix('v1/admin')->middleware(['auth:api'])->group(function (): void {
         Route::get('/growth', [TenantStatisticsController::class, 'growth'])->name('admin.statistics.growth');
         Route::get('/distribution', [TenantStatisticsController::class, 'distribution'])->name('admin.statistics.distribution');
     });
-
-    // Legacy tenant routes (keeping for backward compatibility)
-    Route::apiResource('tenants-legacy', TenantController::class);
-    Route::post('tenants-legacy/{id}/settings', [TenantController::class, 'updateSettings']);
-    Route::get('tenants-legacy/search', [TenantController::class, 'search']);
 });

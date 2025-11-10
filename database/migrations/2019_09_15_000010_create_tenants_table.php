@@ -20,11 +20,13 @@ class CreateTenantsTable extends Migration
             $table->string('display_name'); // Full association name
             $table->text('description')->nullable();
             $table->string('logo_url')->nullable();
-            $table->boolean('active')->default(true);
+            $table->enum('status', ['active', 'inactive'])->default('active');
             $table->json('settings')->nullable(); // Store theme colors, features, payment gateways, etc.
+            $table->json('data')->nullable();
 
             $table->timestamps();
-            $table->json('data')->nullable();
+            $table->softDeletes()->nullable();
+
         });
     }
 
