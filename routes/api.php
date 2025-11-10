@@ -12,11 +12,13 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
 
+// Authentication routes (public, no tenant middleware for admin login)
+Route::prefix('v1/auth')->group(function (): void {
+    Route::post('/login', LoginController::class)->name('auth.login');
+});
+
 // API v1 routes with tenant middleware
 Route::prefix('v1')->middleware([InitializeTenancyByDomain::class])->group(function (): void {
-
-    // Authentication routes (public)
-    Route::post('/auth/login', LoginController::class)->name('auth.login');
 
     // Tenant configuration endpoints
     Route::get('/config', ShowTenantConfigController::class);
