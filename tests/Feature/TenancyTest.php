@@ -285,9 +285,9 @@ describe('TenantService', function () {
         $config = $this->tenantService->getTenantConfig($tenant);
 
         expect($config)->toBeArray()
-            ->toHaveKeys(['tenant', 'branding', 'features', 'payment_gateways', 'settings'])
+            ->toHaveKeys(['tenant', 'theme', 'features', 'payment_gateways', 'settings'])
             ->and($config['tenant']['name'])->toBe('GRNMA')
-            ->and($config['branding']['primary_color'])->toBe('#1976d2');
+            ->and($config['theme']['primary_color'])->toBe('#1976d2');
     });
 });
 
