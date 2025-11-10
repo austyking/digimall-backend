@@ -27,27 +27,37 @@ final class TenantFactory extends Factory
      */
     public function definition(): array
     {
+        // Generate 3-4 letter uppercase code
+        $name = strtoupper(substr(str_shuffle('ABCDEFGHIJKLMNOPQRSTUVWXYZ'), 0, 3));
+
+        // Simple names without fancy Faker formatters
+        $associations = ['Medical', 'Nursing', 'Engineering', 'Legal', 'Education', 'Business', 'Agricultural', 'Dental'];
+        $displayName = $associations[array_rand($associations)].' Association';
+
+        // Simple colors without Faker
+        $colors = ['#1976d2', '#dc004e', '#388e3c', '#f57c00', '#7b1fa2', '#0288d1', '#c62828', '#689f38'];
+
         return [
             'id' => Str::uuid()->toString(),
-            'name' => strtoupper($this->faker->unique()->bothify('???')),
-            'display_name' => $this->faker->company(),
-            'description' => $this->faker->optional()->paragraph(),
-            'logo_url' => $this->faker->optional()->imageUrl(200, 200, 'business'),
+            'name' => $name.$this->faker->unique()->numberBetween(1, 999),
+            'display_name' => $displayName,
+            'description' => 'Test association description',
+            'logo_url' => 'https://example.com/logo.png',
             'status' => 'active',
             'settings' => [
                 'theme' => [
-                    'primary_color' => $this->faker->hexColor(),
-                    'secondary_color' => $this->faker->hexColor(),
+                    'primary_color' => $colors[array_rand($colors)],
+                    'secondary_color' => $colors[array_rand($colors)],
                 ],
                 'features' => [
-                    'hire_purchase' => $this->faker->boolean(80),
-                    'vendor_registration' => $this->faker->boolean(90),
-                    'member_verification' => $this->faker->boolean(85),
+                    'hire_purchase' => true,
+                    'vendor_registration' => true,
+                    'member_verification' => true,
                 ],
                 'payment_gateways' => [
-                    'moolre' => ['enabled' => $this->faker->boolean(70)],
-                    'stripe' => ['enabled' => $this->faker->boolean(50)],
-                    'flutterwave' => ['enabled' => $this->faker->boolean(50)],
+                    'moolre' => ['enabled' => true],
+                    'stripe' => ['enabled' => false],
+                    'flutterwave' => ['enabled' => false],
                 ],
             ],
         ];

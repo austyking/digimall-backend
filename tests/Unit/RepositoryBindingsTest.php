@@ -14,9 +14,6 @@ use App\Repositories\OrderRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\TenantRepository;
 use App\Repositories\VendorRepository;
-use Tests\TestCase;
-
-uses(TestCase::class);
 
 describe('Repository Bindings', function () {
     test('resolves AuthRepository from container', function () {

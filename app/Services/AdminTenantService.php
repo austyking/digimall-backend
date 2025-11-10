@@ -5,13 +5,16 @@ declare(strict_types=1);
 namespace App\Services;
 
 use App\DTOs\ActivateTenantDTO;
+use App\DTOs\AdminCreateTenantDTO;
 use App\DTOs\AdminUpdateTenantDTO;
 use App\DTOs\DeactivateTenantDTO;
+use App\DTOs\DeleteTenantDTO;
 use App\DTOs\TenantFilterDTO;
 use App\Models\Tenant;
 use App\Repositories\Contracts\TenantRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Validation\ValidationException;
 
 /**
  * Service for admin-level tenant management operations.
@@ -137,5 +140,52 @@ final class AdminTenantService
     public function getTenant(string $id): ?Tenant
     {
         return $this->tenantRepository->find($id);
+    }
+
+    /**
+     * Create a new tenant with initial configuration.
+     */
+    public function createTenant(AdminCreateTenantDTO $dto): Tenant
+    {
+        // Verify uniqueness
+        $existing = $this->tenantRepository->findByName($dto->name);
+        if ($existing !== null) {
+            throw ValidationException::withMessages([
+                'name' => ['A tenant with this name already exists.'],
+            ]);
+        }
+
+        // Prepare tenant data
+        $tenantData = $dto->toArray();
+
+        // Create the tenant
+        return $this->tenantRepository->create($tenantData);
+    }
+
+    /**
+     * Delete a tenant with optional force delete.
+     */
+    public function deleteTenant(DeleteTenantDTO $dto): bool
+    {
+        // Find tenant
+        $tenant = $this->tenantRepository->find($dto->tenantId);
+        if ($tenant === null) {
+            throw new \InvalidArgumentException('Tenant not found');
+        }
+
+        // Add deletion audit trail to settings
+        $tenant->settings = array_merge($tenant->settings ?? [], [
+            'deletion' => [
+                'reason' => $dto->reason,
+                'deleted_by' => $dto->deletedBy,
+                'deleted_at' => now()->toISOString(),
+                'force' => $dto->force,
+            ],
+        ]);
+        $tenant->save();
+
+        // Perform deletion (soft delete via repository)
+        // Note: Force delete would need to be implemented separately
+        return $this->tenantRepository->delete($tenant);
     }
 }

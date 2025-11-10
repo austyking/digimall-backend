@@ -6,9 +6,6 @@ use App\Services\CustomerService;
 use App\Services\OrderService;
 use App\Services\ProductService;
 use App\Services\VendorService;
-use Tests\TestCase;
-
-uses(TestCase::class);
 
 describe('Service Layer - Dependency Injection', function () {
     test('all services can be resolved from container', function () {

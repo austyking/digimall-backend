@@ -48,12 +48,16 @@ Route::prefix('v1/admin')->middleware(['auth:api'])->group(function (): void {
         // List and filter tenants
         Route::get('/', [AdminTenantController::class, 'index'])->name('admin.tenants.index');
 
+        // Create tenant
+        Route::post('/', [AdminTenantController::class, 'store'])->name('admin.tenants.store');
+
         // Get inactive tenants
         Route::get('/inactive', [AdminTenantController::class, 'inactive'])->name('admin.tenants.inactive');
 
         // Single tenant operations
         Route::get('/{id}', [AdminTenantController::class, 'show'])->name('admin.tenants.show');
         Route::put('/{id}', [AdminTenantController::class, 'update'])->name('admin.tenants.update');
+        Route::delete('/{id}', [AdminTenantController::class, 'destroy'])->name('admin.tenants.destroy');
 
         // Activation/Deactivation
         Route::post('/{id}/activate', [AdminTenantController::class, 'activate'])->name('admin.tenants.activate');

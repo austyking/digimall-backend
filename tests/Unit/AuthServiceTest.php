@@ -8,9 +8,6 @@ use App\Services\Auth\AuthService;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Support\Facades\Hash;
 use Mockery;
-use Tests\TestCase;
-
-uses(TestCase::class);
 
 beforeEach(function (): void {
     $this->mockRepository = Mockery::mock(AuthRepositoryInterface::class);

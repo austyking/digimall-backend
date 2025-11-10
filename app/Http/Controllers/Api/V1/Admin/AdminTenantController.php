@@ -5,13 +5,17 @@ declare(strict_types=1);
 namespace App\Http\Controllers\Api\V1\Admin;
 
 use App\DTOs\ActivateTenantDTO;
+use App\DTOs\AdminCreateTenantDTO;
 use App\DTOs\AdminUpdateTenantDTO;
 use App\DTOs\DeactivateTenantDTO;
+use App\DTOs\DeleteTenantDTO;
 use App\DTOs\TenantFilterDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\ActivateTenantRequest;
 use App\Http\Requests\Admin\BulkTenantActionRequest;
+use App\Http\Requests\Admin\CreateTenantRequest;
 use App\Http\Requests\Admin\DeactivateTenantRequest;
+use App\Http\Requests\Admin\DeleteTenantRequest;
 use App\Http\Requests\Admin\GetFilteredTenantsRequest;
 use App\Http\Requests\Admin\UpdateTenantRequest;
 use App\Http\Resources\Admin\AdminTenantResource;
@@ -34,6 +38,20 @@ final class AdminTenantController extends Controller
         $tenants = $this->tenantService->getFilteredTenants($dto);
 
         return AdminTenantResource::collection($tenants);
+    }
+
+    /**
+     * Create a new tenant.
+     */
+    public function store(CreateTenantRequest $request): JsonResponse
+    {
+        $dto = AdminCreateTenantDTO::fromRequest($request);
+        $tenant = $this->tenantService->createTenant($dto);
+
+        return response()->json([
+            'message' => 'Tenant created successfully',
+            'data' => new AdminTenantResource($tenant),
+        ], 201);
     }
 
     /**
@@ -138,5 +156,27 @@ final class AdminTenantController extends Controller
         $tenants = $this->tenantService->getInactiveTenants();
 
         return AdminTenantResource::collection($tenants);
+    }
+
+    /**
+     * Delete a tenant.
+     */
+    public function destroy(DeleteTenantRequest $request, string $id): JsonResponse
+    {
+        try {
+            $dto = DeleteTenantDTO::fromRequest($request, $id);
+            $this->tenantService->deleteTenant($dto);
+
+            return response()->json([
+                'message' => 'Tenant deleted successfully',
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            if ($e->getMessage() === 'Tenant not found') {
+                return response()->json([
+                    'message' => 'Tenant not found',
+                ], 404);
+            }
+            throw $e;
+        }
     }
 }
