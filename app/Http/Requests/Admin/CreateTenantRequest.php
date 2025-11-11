@@ -60,39 +60,9 @@ final class CreateTenantRequest extends FormRequest
                 'max:5120', // 5MB in kilobytes
                 'mimes:jpeg,jpg,png,gif,webp',
             ],
-            // Nested settings structure (consistent with update)
-            'settings' => ['nullable', 'array'],
-            'settings.theme' => ['nullable', 'array'],
-            'settings.theme.primary_color' => [
-                'nullable',
-                'string',
-                'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
-            ],
-            'settings.theme.secondary_color' => [
-                'nullable',
-                'string',
-                'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
-            ],
-            'settings.features' => ['nullable', 'array'],
-            'settings.features.hire_purchase_enabled' => ['nullable', 'boolean'],
-            'settings.features.vendor_registration_enabled' => ['nullable', 'boolean'],
-            'settings.features.multi_currency_enabled' => ['nullable', 'boolean'],
-            'settings.contact' => ['nullable', 'array'],
-            'settings.contact.email' => [
-                'nullable',
-                'email',
-                'max:255',
-            ],
-            'settings.contact.phone' => [
-                'nullable',
-                'string',
-                'max:50',
-            ],
-            'settings.contact.address' => [
-                'nullable',
-                'string',
-                'max:500',
-            ],
+            // Settings is always sent as JSON string from FormData
+            // Nested structure validation happens in DTO after JSON decode
+            'settings' => ['nullable', 'json'],
         ];
     }
 
@@ -108,8 +78,7 @@ final class CreateTenantRequest extends FormRequest
             'name.unique' => 'An association with this name already exists',
             'name.regex' => 'Association name must be uppercase alphanumeric with underscores (e.g., GRNMA, GMA)',
             'display_name.required' => 'Display name is required',
-            'settings.theme.primary_color.regex' => 'Primary color must be a valid hex color code',
-            'settings.theme.secondary_color.regex' => 'Secondary color must be a valid hex color code',
+            'settings.json' => 'Settings must be a valid JSON string',
         ];
     }
 
@@ -123,8 +92,6 @@ final class CreateTenantRequest extends FormRequest
         return [
             'name' => 'association name',
             'display_name' => 'display name',
-            'settings.theme.primary_color' => 'primary color',
-            'settings.theme.secondary_color' => 'secondary color',
         ];
     }
 }

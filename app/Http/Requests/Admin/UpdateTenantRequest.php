@@ -34,19 +34,9 @@ final class UpdateTenantRequest extends FormRequest
                 'mimes:jpeg,jpg,png,gif,webp',
             ],
             'logo_url' => ['nullable', 'url', 'max:500'],
-            'settings' => ['nullable', 'array'],
-            'settings.theme' => ['nullable', 'array'],
-            'settings.theme.primary_color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'settings.theme.secondary_color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
-            'settings.features' => ['nullable', 'array'],
-            'settings.features.hire_purchase_enabled' => ['nullable', 'boolean'],
-            'settings.features.vendor_registration_enabled' => ['nullable', 'boolean'],
-            'settings.features.multi_currency_enabled' => ['nullable', 'boolean'],
-            'settings.contact' => ['nullable', 'array'],
-            'settings.contact.email' => ['nullable', 'email', 'max:255'],
-            'settings.contact.phone' => ['nullable', 'string', 'max:50'],
-            'settings.contact.address' => ['nullable', 'string', 'max:500'],
-            'settings.payment_gateways' => ['nullable', 'array'],
+            // Settings is always sent as JSON string from FormData
+            // Nested structure validation happens in DTO after JSON decode
+            'settings' => ['nullable', 'json'],
         ];
     }
 
@@ -57,9 +47,6 @@ final class UpdateTenantRequest extends FormRequest
      */
     public function messages(): array
     {
-        return [
-            'settings.theme.primary_color.regex' => 'The primary color must be a valid hex color code (e.g., #1976d2).',
-            'settings.theme.secondary_color.regex' => 'The secondary color must be a valid hex color code (e.g., #dc004e).',
-        ];
+        return [];
     }
 }

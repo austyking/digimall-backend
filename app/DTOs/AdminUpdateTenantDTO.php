@@ -6,6 +6,7 @@ namespace App\DTOs;
 
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
+use JsonException;
 
 final readonly class AdminUpdateTenantDTO
 {
@@ -32,7 +33,15 @@ final readonly class AdminUpdateTenantDTO
 
             // If settings is a JSON string (from FormData), decode it
             if (is_string($settingsInput)) {
-                $settings = json_decode($settingsInput, true);
+                try {
+                    $settings = json_decode($settingsInput, true, 512, JSON_THROW_ON_ERROR);
+                } catch (JsonException $e) {
+                    throw new \InvalidArgumentException(
+                        'Invalid JSON format for settings: '.$e->getMessage(),
+                        0,
+                        $e
+                    );
+                }
             } else {
                 $settings = $settingsInput;
             }

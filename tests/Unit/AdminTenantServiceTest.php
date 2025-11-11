@@ -9,11 +9,13 @@ use App\DTOs\TenantFilterDTO;
 use App\Models\Tenant;
 use App\Repositories\Contracts\TenantRepositoryInterface;
 use App\Services\AdminTenantService;
+use App\Services\Contracts\FileUploadServiceInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 beforeEach(function () {
     $this->mockRepository = mock(TenantRepositoryInterface::class);
-    $this->service = new AdminTenantService($this->mockRepository);
+    $this->mockFileUploadService = mock(FileUploadServiceInterface::class);
+    $this->service = new AdminTenantService($this->mockRepository, $this->mockFileUploadService);
 });
 
 describe('AdminTenantService Unit Tests', function () {

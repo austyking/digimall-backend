@@ -12,6 +12,7 @@ use App\DTOs\DeleteTenantDTO;
 use App\DTOs\TenantFilterDTO;
 use App\Models\Tenant;
 use App\Repositories\Contracts\TenantRepositoryInterface;
+use App\Services\Contracts\FileUploadServiceInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
@@ -22,7 +23,8 @@ use Illuminate\Validation\ValidationException;
 final class AdminTenantService
 {
     public function __construct(
-        private readonly TenantRepositoryInterface $tenantRepository
+        private readonly TenantRepositoryInterface $tenantRepository,
+        private readonly FileUploadServiceInterface $fileUploadService
     ) {}
 
     /**
@@ -112,10 +114,8 @@ final class AdminTenantService
 
         // Handle logo upload if present
         if ($dto->logo !== null) {
-            // Store in tenant-specific directory (consistent with create)
-            $logoPath = $dto->logo->store("tenants/{$tenant->id}", 'public');
-            // Store full URL in logo_url column (consistent with create)
-            $updateData['logo_url'] = \Storage::disk('public')->url($logoPath);
+            $logoUrl = $this->fileUploadService->uploadTenantLogo($dto->logo, $tenant->id);
+            $updateData['logo_url'] = $logoUrl;
         }
 
         // Handle settings merge instead of replace
