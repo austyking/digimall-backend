@@ -77,12 +77,20 @@ final class AdminTenantController extends Controller
      */
     public function update(UpdateTenantRequest $request, string $id): JsonResponse
     {
+        $tenant = $this->tenantService->getTenant($id);
+
+        if (! $tenant) {
+            return response()->json([
+                'message' => 'Tenant not found',
+            ], 404);
+        }
+
         $dto = AdminUpdateTenantDTO::fromRequest($request);
-        $tenant = $this->tenantService->updateTenant($id, $dto);
+        $updatedTenant = $this->tenantService->updateTenant($tenant, $dto);
 
         return response()->json([
             'message' => 'Tenant updated successfully',
-            'data' => new AdminTenantResource($tenant),
+            'data' => new AdminTenantResource($updatedTenant),
         ]);
     }
 

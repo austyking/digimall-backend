@@ -104,6 +104,20 @@ final class AdminTenantService
         $updatedBy = $updateData['updatedBy'] ?? null;
         unset($updateData['updatedBy']);
 
+        // Convert active boolean to status string
+        if (isset($updateData['active'])) {
+            $updateData['status'] = $updateData['active'] ? 'active' : 'inactive';
+            unset($updateData['active']);
+        }
+
+        // Handle logo upload if present
+        if ($dto->logo !== null) {
+            // Store in tenant-specific directory (consistent with create)
+            $logoPath = $dto->logo->store("tenants/{$tenant->id}", 'public');
+            // Store full URL in logo_url column (consistent with create)
+            $updateData['logo_url'] = \Storage::disk('public')->url($logoPath);
+        }
+
         // Handle settings merge instead of replace
         if (isset($updateData['settings'])) {
             $updateData['settings'] = array_merge(

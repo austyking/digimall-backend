@@ -53,17 +53,6 @@ final class CreateTenantRequest extends FormRequest
             'active' => [
                 'boolean',
             ],
-            // Accept flat format from frontend
-            'theme_primary_color' => [
-                'nullable',
-                'string',
-                'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
-            ],
-            'theme_secondary_color' => [
-                'nullable',
-                'string',
-                'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
-            ],
             'logo' => [
                 'nullable',
                 'file',
@@ -71,26 +60,35 @@ final class CreateTenantRequest extends FormRequest
                 'max:5120', // 5MB in kilobytes
                 'mimes:jpeg,jpg,png,gif,webp',
             ],
-            'hire_purchase_enabled' => [
-                'boolean',
+            // Nested settings structure (consistent with update)
+            'settings' => ['nullable', 'array'],
+            'settings.theme' => ['nullable', 'array'],
+            'settings.theme.primary_color' => [
+                'nullable',
+                'string',
+                'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
             ],
-            'vendor_registration_enabled' => [
-                'boolean',
+            'settings.theme.secondary_color' => [
+                'nullable',
+                'string',
+                'regex:/^#([A-Fa-f0-9]{6}|[A-Fa-f0-9]{3})$/',
             ],
-            'multi_currency_enabled' => [
-                'boolean',
-            ],
-            'contact_email' => [
+            'settings.features' => ['nullable', 'array'],
+            'settings.features.hire_purchase_enabled' => ['nullable', 'boolean'],
+            'settings.features.vendor_registration_enabled' => ['nullable', 'boolean'],
+            'settings.features.multi_currency_enabled' => ['nullable', 'boolean'],
+            'settings.contact' => ['nullable', 'array'],
+            'settings.contact.email' => [
                 'nullable',
                 'email',
                 'max:255',
             ],
-            'contact_phone' => [
+            'settings.contact.phone' => [
                 'nullable',
                 'string',
                 'max:50',
             ],
-            'contact_address' => [
+            'settings.contact.address' => [
                 'nullable',
                 'string',
                 'max:500',

@@ -62,7 +62,6 @@ final class TenantRepository implements TenantRepositoryInterface
 
             // Handle logo upload if present
             if ($logo && $logo instanceof \Illuminate\Http\UploadedFile) {
-                // Store the logo in public disk under tenants/{tenant_id} folder
                 $path = $logo->store("tenants/{$tenant->id}", 'public');
 
                 // Update tenant with logo URL

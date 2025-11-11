@@ -26,12 +26,26 @@ final class UpdateTenantRequest extends FormRequest
         return [
             'display_name' => ['nullable', 'string', 'max:255'],
             'description' => ['nullable', 'string', 'max:1000'],
+            'logo' => [
+                'nullable',
+                'file',
+                'image',
+                'max:5120', // 5MB in kilobytes
+                'mimes:jpeg,jpg,png,gif,webp',
+            ],
             'logo_url' => ['nullable', 'url', 'max:500'],
             'settings' => ['nullable', 'array'],
             'settings.theme' => ['nullable', 'array'],
             'settings.theme.primary_color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'settings.theme.secondary_color' => ['nullable', 'string', 'regex:/^#[0-9A-Fa-f]{6}$/'],
             'settings.features' => ['nullable', 'array'],
+            'settings.features.hire_purchase_enabled' => ['nullable', 'boolean'],
+            'settings.features.vendor_registration_enabled' => ['nullable', 'boolean'],
+            'settings.features.multi_currency_enabled' => ['nullable', 'boolean'],
+            'settings.contact' => ['nullable', 'array'],
+            'settings.contact.email' => ['nullable', 'email', 'max:255'],
+            'settings.contact.phone' => ['nullable', 'string', 'max:50'],
+            'settings.contact.address' => ['nullable', 'string', 'max:500'],
             'settings.payment_gateways' => ['nullable', 'array'],
         ];
     }

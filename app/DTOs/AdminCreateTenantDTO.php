@@ -28,38 +28,48 @@ final readonly class AdminCreateTenantDTO
         $user = $request->user();
         $userId = $user?->id;
 
-        // Build nested settings structure from flat frontend format
+        // Build nested settings structure
         $settings = [];
 
-        // Theme settings
-        if ($request->has('theme_primary_color') || $request->has('theme_secondary_color')) {
-            $settings['theme'] = array_filter([
-                'primary_color' => $request->input('theme_primary_color'),
-                'secondary_color' => $request->input('theme_secondary_color'),
-            ], fn ($value) => $value !== null);
-        }
+        // Check if settings are already nested (new format)
+        if ($request->has('settings')) {
+            $settingsInput = $request->input('settings');
 
-        // Feature settings
-        if ($request->has('hire_purchase_enabled') || $request->has('vendor_registration_enabled') || $request->has('multi_currency_enabled')) {
-            $settings['features'] = [
-                'hire_purchase_enabled' => $request->boolean('hire_purchase_enabled', true),
-                'vendor_registration_enabled' => $request->boolean('vendor_registration_enabled', true),
-                'multi_currency_enabled' => $request->boolean('multi_currency_enabled', false),
-            ];
-        }
+            // If settings is a JSON string (from FormData), decode it
+            if (is_string($settingsInput)) {
+                $settings = json_decode($settingsInput, true) ?? [];
+            } else {
+                $settings = $settingsInput;
+            }
+        } else {
+            // Fallback: Build from flat format (legacy support)
 
-        // Contact settings
-        if ($request->has('contact_email') || $request->has('contact_phone') || $request->has('contact_address')) {
-            $settings['contact'] = array_filter([
-                'email' => $request->input('contact_email'),
-                'phone' => $request->input('contact_phone'),
-                'address' => $request->input('contact_address'),
-            ], fn ($value) => $value !== null);
-        }
+            // Theme settings
+            if ($request->has('theme_primary_color') || $request->has('theme_secondary_color')) {
+                $settings['theme'] = array_filter([
+                    'primary_color' => $request->input('theme_primary_color'),
+                    'secondary_color' => $request->input('theme_secondary_color'),
+                ], fn ($value) => $value !== null);
+            }
 
-        // Merge with any additional settings from request
-        $additionalSettings = $request->input('settings', []);
-        $settings = array_merge($settings, $additionalSettings);
+            // Feature settings
+            if ($request->has('hire_purchase_enabled') || $request->has('vendor_registration_enabled') || $request->has('multi_currency_enabled')) {
+                $settings['features'] = [
+                    'hire_purchase_enabled' => $request->boolean('hire_purchase_enabled', true),
+                    'vendor_registration_enabled' => $request->boolean('vendor_registration_enabled', true),
+                    'multi_currency_enabled' => $request->boolean('multi_currency_enabled', false),
+                ];
+            }
+
+            // Contact settings
+            if ($request->has('contact_email') || $request->has('contact_phone') || $request->has('contact_address')) {
+                $settings['contact'] = array_filter([
+                    'email' => $request->input('contact_email'),
+                    'phone' => $request->input('contact_phone'),
+                    'address' => $request->input('contact_address'),
+                ], fn ($value) => $value !== null);
+            }
+        }
 
         return new self(
             name: $request->input('name'),
