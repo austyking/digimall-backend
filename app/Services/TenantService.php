@@ -31,7 +31,7 @@ final readonly class TenantService
                 'description' => $tenant->description,
                 'active' => $tenant->active,
             ],
-            'branding' => $tenant->getBrandingConfig(),
+            'theme' => $tenant->getBrandingConfig(),
             'features' => $tenant->getSetting('features', []),
             'payment_gateways' => $tenant->getSetting('payment_gateways', []),
             'settings' => $tenant->settings ?? [],

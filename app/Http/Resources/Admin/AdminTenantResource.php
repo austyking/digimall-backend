@@ -21,6 +21,7 @@ final class AdminTenantResource extends JsonResource
             'name' => $this->name,
             'display_name' => $this->display_name,
             'description' => $this->description,
+            'domain' => $this->domains->first()?->domain ?? null,
             'logo_url' => $this->logo_url,
             'status' => $this->status,
             'settings' => $this->settings,
@@ -31,7 +32,7 @@ final class AdminTenantResource extends JsonResource
                 ]);
             }),
             'status_history' => $this->settings['status_history'] ?? [],
-            'branding' => [
+            'theme' => [
                 'primary_color' => $this->getSetting('theme.primary_color', '#1976d2'),
                 'secondary_color' => $this->getSetting('theme.secondary_color', '#dc004e'),
             ],

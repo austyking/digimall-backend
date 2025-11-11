@@ -6,6 +6,7 @@ namespace App\Repositories;
 
 use App\Models\Tenant;
 use App\Repositories\Contracts\TenantRepositoryInterface;
+use DB;
 use Illuminate\Support\Collection;
 
 final class TenantRepository implements TenantRepositoryInterface
@@ -39,7 +40,7 @@ final class TenantRepository implements TenantRepositoryInterface
      */
     public function allActive(): Collection
     {
-        return Tenant::query()->where('status', 'active')->get();
+        return Tenant::query()->with('domains')->where('status', 'active')->get();
     }
 
     /**
@@ -47,7 +48,7 @@ final class TenantRepository implements TenantRepositoryInterface
      */
     public function create(array $data): Tenant
     {
-        return \DB::transaction(function () use ($data) {
+        return DB::transaction(function () use ($data) {
             // Extract domain (handled separately)
             $domain = $data['domain'] ?? null;
             unset($data['domain']);
@@ -119,7 +120,7 @@ final class TenantRepository implements TenantRepositoryInterface
      */
     public function allInactive(): Collection
     {
-        return Tenant::query()->where('status', 'inactive')->get();
+        return Tenant::query()->with('domains')->where('status', 'inactive')->get();
     }
 
     /**
@@ -132,7 +133,7 @@ final class TenantRepository implements TenantRepositoryInterface
         string $sortDirection = 'desc',
         int $perPage = 15
     ) {
-        $query = Tenant::query();
+        $query = Tenant::query()->with('domains');
 
         // Apply status filter
         if ($status !== null) {
