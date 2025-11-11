@@ -113,15 +113,15 @@ describe('AdminTenantController Feature Tests', function () {
                 ->assertJsonValidationErrors(['description']);
         });
 
-        test('validates theme color format', function () {
+        test('validates settings JSON format', function () {
             $response = $this->postJson('/api/v1/admin/tenants', [
                 'name' => 'TEST',
                 'display_name' => 'Test',
-                'theme_primary_color' => 'invalid-color',
+                'settings' => 'invalid-json',
             ]);
 
             $response->assertStatus(422)
-                ->assertJsonValidationErrors(['theme_primary_color']);
+                ->assertJsonValidationErrors(['settings']);
         });
 
         test('creates tenant successfully with minimal data', function () {
@@ -162,8 +162,14 @@ describe('AdminTenantController Feature Tests', function () {
                 'name' => 'GMA',
                 'display_name' => 'Ghana Medical Association',
                 'description' => 'Association for medical professionals',
-                'theme_primary_color' => '#1976d2',
-                'hire_purchase_enabled' => true,
+                'settings' => json_encode([
+                    'theme' => [
+                        'primary_color' => '#1976d2',
+                    ],
+                    'features' => [
+                        'hire_purchase_enabled' => true,
+                    ],
+                ]),
             ]);
 
             $response->assertCreated()

@@ -3,7 +3,7 @@
 declare(strict_types=1);
 
 use App\Models\Tenant;
-use App\Repositories\TenantRepository;
+use App\Repositories\Contracts\TenantRepositoryInterface;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 
@@ -11,7 +11,7 @@ uses(RefreshDatabase::class);
 
 describe('TenantRepository Integration Tests', function () {
     beforeEach(function () {
-        $this->repository = new TenantRepository;
+        $this->repository = app(TenantRepositoryInterface::class);
     });
 
     describe('findByName()', function () {

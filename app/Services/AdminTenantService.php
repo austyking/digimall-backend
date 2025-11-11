@@ -12,6 +12,7 @@ use App\DTOs\DeleteTenantDTO;
 use App\DTOs\TenantFilterDTO;
 use App\Models\Tenant;
 use App\Repositories\Contracts\TenantRepositoryInterface;
+use App\Services\Contracts\FileUploadServiceInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Validation\ValidationException;
@@ -22,7 +23,8 @@ use Illuminate\Validation\ValidationException;
 final class AdminTenantService
 {
     public function __construct(
-        private readonly TenantRepositoryInterface $tenantRepository
+        private readonly TenantRepositoryInterface $tenantRepository,
+        private readonly FileUploadServiceInterface $fileUploadService
     ) {}
 
     /**
@@ -103,6 +105,18 @@ final class AdminTenantService
         // Remove updatedBy from update data as it's not a database column
         $updatedBy = $updateData['updatedBy'] ?? null;
         unset($updateData['updatedBy']);
+
+        // Convert active boolean to status string
+        if (isset($updateData['active'])) {
+            $updateData['status'] = $updateData['active'] ? 'active' : 'inactive';
+            unset($updateData['active']);
+        }
+
+        // Handle logo upload if present
+        if ($dto->logo !== null) {
+            $logoUrl = $this->fileUploadService->uploadTenantLogo($dto->logo, $tenant->id);
+            $updateData['logo_url'] = $logoUrl;
+        }
 
         // Handle settings merge instead of replace
         if (isset($updateData['settings'])) {

@@ -7,12 +7,14 @@ use App\DTOs\DeleteTenantDTO;
 use App\Models\Tenant;
 use App\Repositories\Contracts\TenantRepositoryInterface;
 use App\Services\AdminTenantService;
+use App\Services\Contracts\FileUploadServiceInterface;
 use Illuminate\Validation\ValidationException;
 
 describe('AdminTenantService Unit Tests', function () {
     beforeEach(function () {
         $this->mockRepository = Mockery::mock(TenantRepositoryInterface::class);
-        $this->service = new AdminTenantService($this->mockRepository);
+        $this->mockFileUploadService = Mockery::mock(FileUploadServiceInterface::class);
+        $this->service = new AdminTenantService($this->mockRepository, $this->mockFileUploadService);
     });
 
     afterEach(function () {

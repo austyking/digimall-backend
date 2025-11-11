@@ -6,11 +6,14 @@ namespace App\Repositories;
 
 use App\Models\Tenant;
 use App\Repositories\Contracts\TenantRepositoryInterface;
+use App\Services\Contracts\FileUploadServiceInterface;
 use DB;
 use Illuminate\Support\Collection;
 
 final class TenantRepository implements TenantRepositoryInterface
 {
+    public function __construct(private FileUploadServiceInterface $fileUploadService) {}
+
     /**
      * Find a tenant by ID.
      */
@@ -62,11 +65,8 @@ final class TenantRepository implements TenantRepositoryInterface
 
             // Handle logo upload if present
             if ($logo && $logo instanceof \Illuminate\Http\UploadedFile) {
-                // Store the logo in public disk under tenants/{tenant_id} folder
-                $path = $logo->store("tenants/{$tenant->id}", 'public');
-
-                // Update tenant with logo URL
-                $tenant->update(['logo_url' => \Storage::disk('public')->url($path)]);
+                $logoUrl = $this->fileUploadService->uploadTenantLogo($logo, $tenant->id);
+                $tenant->update(['logo_url' => $logoUrl]);
             }
 
             // Create domain if provided
