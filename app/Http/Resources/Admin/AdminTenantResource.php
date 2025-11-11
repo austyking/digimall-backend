@@ -25,10 +25,12 @@ final class AdminTenantResource extends JsonResource
             'logo_url' => $this->logo_url,
             'status' => $this->status,
             'settings' => $this->settings,
-            'domains' => $this->domains->map(fn ($domain) => [
-                'id' => $domain->id,
-                'domain' => $domain->domain,
-            ]),
+            'domains' => $this->whenLoaded('domains', function () {
+                return $this->domains->map(fn ($domain) => [
+                    'id' => $domain->id,
+                    'domain' => $domain->domain,
+                ]);
+            }),
             'status_history' => $this->settings['status_history'] ?? [],
             'theme' => [
                 'primary_color' => $this->getSetting('theme.primary_color', '#1976d2'),
