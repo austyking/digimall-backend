@@ -19,8 +19,8 @@ return [
     'central_domains' => [
         '127.0.0.1',
         'localhost',
-        'digimall.test', // Local development central domain
-        'admin.digimall.com', // Production central/admin domain (if needed)
+        'digimall.test',
+        'admin.digimall.com',
     ],
 
     /**

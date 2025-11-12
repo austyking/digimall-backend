@@ -20,9 +20,11 @@ class VendorFactory extends Factory
      */
     public function definition(): array
     {
+        $tenant = Tenant::factory()->create();
+
         return [
-            'tenant_id' => Tenant::factory(),
-            'user_id' => User::factory(),
+            'tenant_id' => $tenant->id,
+            'user_id' => User::factory()->create(['tenant_id' => $tenant->id])->id,
             'business_name' => $this->faker->company(),
             'contact_name' => $this->faker->name(),
             'email' => $this->faker->unique()->companyEmail(),
@@ -30,7 +32,7 @@ class VendorFactory extends Factory
             'description' => $this->faker->paragraph(),
             'address_line_1' => $this->faker->streetAddress(),
             'city' => $this->faker->city(),
-            'state' => $this->faker->city (),
+            'state' => $this->faker->city(),
             'postal_code' => $this->faker->postcode(),
             'country' => 'Ghana',
             'business_registration_number' => $this->faker->unique()->numerify('BRN#####'),
@@ -112,6 +114,7 @@ class VendorFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'tenant_id' => $tenant->id,
+            'user_id' => User::factory()->create(['tenant_id' => $tenant->id])->id,
         ]);
     }
 
@@ -121,6 +124,7 @@ class VendorFactory extends Factory
     public function forUser(User $user): static
     {
         return $this->state(fn (array $attributes) => [
+            'tenant_id' => $user->tenant_id,
             'user_id' => $user->id,
         ]);
     }

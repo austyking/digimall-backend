@@ -13,9 +13,8 @@ namespace App\DTOs;
 final readonly class RegisterVendorDTO
 {
     public function __construct(
-        // Required fields
-        public string $tenantId,
-        public string $userId,
+        // tenant_id resolved from current tenant
+        public ?string $tenantId,
         public string $businessName,
         public string $contactName,
         public string $email,
@@ -57,8 +56,7 @@ final readonly class RegisterVendorDTO
     public static function fromRequest(array $data): self
     {
         return new self(
-            tenantId: $data['tenant_id'],
-            userId: $data['user_id'],
+            tenantId: $data['tenant_id'] ?? null, // Will be resolved from current tenant
             businessName: $data['business_name'],
             contactName: $data['contact_name'],
             email: $data['email'],
@@ -92,7 +90,6 @@ final readonly class RegisterVendorDTO
     {
         $data = [
             'tenant_id' => $this->tenantId,
-            'user_id' => $this->userId,
             'business_name' => $this->businessName,
             'contact_name' => $this->contactName,
             'email' => $this->email,
@@ -132,9 +129,7 @@ final readonly class RegisterVendorDTO
      */
     public function validate(): bool
     {
-        return ! empty($this->tenantId)
-            && ! empty($this->userId)
-            && ! empty($this->businessName)
+        return ! empty($this->businessName)
             && ! empty($this->contactName)
             && ! empty($this->email)
             && filter_var($this->email, FILTER_VALIDATE_EMAIL) !== false;

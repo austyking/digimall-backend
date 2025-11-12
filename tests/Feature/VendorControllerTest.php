@@ -14,6 +14,9 @@ beforeEach(function (): void {
     // Re-enable tenant middleware for feature tests (disabled globally in TestCase)
     $this->withMiddleware();
 
+    // Seed roles and permissions first
+    $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\RolesAndPermissionsSeeder']);
+
     // Seed tenants (creates GRNMA and other tenants with proper domains)
     $this->artisan('db:seed', ['--class' => 'Database\\Seeders\\TenantSeeder']);
 
@@ -29,26 +32,21 @@ beforeEach(function (): void {
 
 describe('VendorController Registration', function (): void {
     test('registers a new vendor successfully with valid data', function (): void {
-        $response = $this
-            ->actingAs($this->user, 'api')
-            ->postJson("{$this->tenantUrl}/api/v1/vendors/register", [
-                'tenant_id' => $this->tenant->id,
-                'user_id' => $this->user->id,
-                'business_name' => 'Test Pharmacy',
-                'contact_name' => 'John Doe',
-                'email' => 'john@testpharmacy.com',
-                'phone' => '0244123456',
-                'address' => '123 Main Street',
-                'city' => 'Accra',
-                'country' => 'Ghana',
-            ]);
+        // No authentication required - registration creates the user
+        $response = $this->postJson("{$this->tenantUrl}/api/v1/vendors/register", [
+            'business_name' => 'Test Pharmacy',
+            'contact_name' => 'John Doe',
+            'email' => 'john@testpharmacy.com',
+            'phone' => '0244123456',
+            'address' => '123 Main Street',
+            'city' => 'Accra',
+            'country' => 'Ghana',
+        ]);
 
         $response->assertCreated()
             ->assertJsonStructure([
                 'data' => [
                     'id',
-                    'tenant_id',
-                    'user_id',
                     'business_name',
                     'contact_name',
                     'email',
@@ -66,29 +64,25 @@ describe('VendorController Registration', function (): void {
             'business_name' => 'Test Pharmacy',
             'email' => 'john@testpharmacy.com',
             'status' => 'pending',
-        ]);
-    });
-
-    test('requires authentication for vendor registration', function (): void {
-        $response = $this->postJson("{$this->tenantUrl}/api/v1/vendors/register", [
             'tenant_id' => $this->tenant->id,
-            'user_id' => $this->user->id,
-            'business_name' => 'Test Pharmacy',
-            'contact_name' => 'John Doe',
-            'email' => 'john@testpharmacy.com',
         ]);
 
-        $response->assertUnauthorized();
+        // Verify user was auto-created with vendor role
+        $vendor = Vendor::where('email', 'john@testpharmacy.com')->first();
+        expect($vendor->user_id)->not->toBeNull();
+
+        $user = User::find($vendor->user_id);
+        expect($user)->not->toBeNull()
+            ->and($user->email)->toBe('john@testpharmacy.com')
+            ->and($user->tenant_id)->toBe($this->tenant->id)
+            ->and($user->hasRole('vendor'))->toBeTrue();
     });
 
     test('validates required fields for vendor registration', function (): void {
-        $response = $this->actingAs($this->user, 'api')
-            ->postJson("{$this->tenantUrl}/api/v1/vendors/register", []);
+        $response = $this->postJson("{$this->tenantUrl}/api/v1/vendors/register", []);
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors([
-                'tenant_id',
-                'user_id',
                 'business_name',
                 'contact_name',
                 'email',
@@ -96,14 +90,11 @@ describe('VendorController Registration', function (): void {
     });
 
     test('validates email format during registration', function (): void {
-        $response = $this->actingAs($this->user, 'api')
-            ->postJson("{$this->tenantUrl}/api/v1/vendors/register", [
-                'tenant_id' => $this->tenant->id,
-                'user_id' => $this->user->id,
-                'business_name' => 'Test Pharmacy',
-                'contact_name' => 'John Doe',
-                'email' => 'invalid-email',
-            ]);
+        $response = $this->postJson("{$this->tenantUrl}/api/v1/vendors/register", [
+            'business_name' => 'Test Pharmacy',
+            'contact_name' => 'John Doe',
+            'email' => 'invalid-email',
+        ]);
 
         $response->assertUnprocessable()
             ->assertJsonValidationErrors(['email']);
@@ -116,36 +107,30 @@ describe('VendorController Registration', function (): void {
             'email' => 'existing@testpharmacy.com',
         ]);
 
-        $response = $this->actingAs($this->user, 'api')
-            ->postJson("{$this->tenantUrl}/api/v1/vendors/register", [
-                'tenant_id' => $this->tenant->id,
-                'user_id' => $this->user->id,
-                'business_name' => 'New Pharmacy',
-                'contact_name' => 'Jane Doe',
-                'email' => 'existing@testpharmacy.com',
-            ]);
+        $response = $this->postJson("{$this->tenantUrl}/api/v1/vendors/register", [
+            'business_name' => 'New Pharmacy',
+            'contact_name' => 'Jane Doe',
+            'email' => 'existing@testpharmacy.com',
+        ]);
 
         $response->assertStatus(Response::HTTP_UNPROCESSABLE_ENTITY)
             ->assertJsonValidationErrors(['email']);
     });
 
     test('includes optional fields in vendor registration', function (): void {
-        $response = $this->actingAs($this->user, 'api')
-            ->postJson("{$this->tenantUrl}/api/v1/vendors/register", [
-                'tenant_id' => $this->tenant->id,
-                'user_id' => $this->user->id,
-                'business_name' => 'Test Pharmacy',
-                'contact_name' => 'John Doe',
-                'email' => 'john@testpharmacy.com',
-                'phone' => '0244123456',
-                'address' => '123 Main Street',
-                'city' => 'Accra',
-                'state' => 'Greater Accra',
-                'postal_code' => '00233',
-                'commission_rate' => 12.5,
-                'commission_type' => 'percentage',
-                'description' => 'Leading pharmacy in Accra',
-            ]);
+        $response = $this->postJson("{$this->tenantUrl}/api/v1/vendors/register", [
+            'business_name' => 'Test Pharmacy',
+            'contact_name' => 'John Doe',
+            'email' => 'john@testpharmacy.com',
+            'phone' => '0244123456',
+            'address' => '123 Main Street',
+            'city' => 'Accra',
+            'state' => 'Greater Accra',
+            'postal_code' => '00233',
+            'commission_rate' => 12.5,
+            'commission_type' => 'percentage',
+            'description' => 'Leading pharmacy in Accra',
+        ]);
 
         $response->assertCreated()
             ->assertJsonPath('data.phone', '0244123456')

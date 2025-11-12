@@ -8,16 +8,13 @@ use App\DTOs\UpdateVendorDTO;
 describe('RegisterVendorDTO', function () {
     test('creates DTO with all required fields', function () {
         $dto = new RegisterVendorDTO(
-            tenantId: 'tenant-123',
-            userId: 'user-123',
+            tenantId: null, // Will be resolved from current tenant
             businessName: 'Test Pharmacy',
             contactName: 'John Doe',
             email: 'john@testpharmacy.com'
         );
 
-        expect($dto->tenantId)->toBe('tenant-123')
-            ->and($dto->userId)->toBe('user-123')
-            ->and($dto->businessName)->toBe('Test Pharmacy')
+        expect($dto->businessName)->toBe('Test Pharmacy')
             ->and($dto->contactName)->toBe('John Doe')
             ->and($dto->email)->toBe('john@testpharmacy.com')
             ->and($dto->country)->toBe('Ghana'); // Default value
@@ -25,8 +22,6 @@ describe('RegisterVendorDTO', function () {
 
     test('creates DTO from request data', function () {
         $requestData = [
-            'tenant_id' => 'tenant-123',
-            'user_id' => 'user-123',
             'business_name' => 'Test Pharmacy',
             'contact_name' => 'John Doe',
             'email' => 'john@testpharmacy.com',
@@ -38,16 +33,14 @@ describe('RegisterVendorDTO', function () {
 
         $dto = RegisterVendorDTO::fromRequest($requestData);
 
-        expect($dto->tenantId)->toBe('tenant-123')
-            ->and($dto->businessName)->toBe('Test Pharmacy')
+        expect($dto->businessName)->toBe('Test Pharmacy')
             ->and($dto->phone)->toBe('0244123456')
             ->and($dto->city)->toBe('Accra');
     });
 
     test('converts DTO to array with required fields', function () {
         $dto = new RegisterVendorDTO(
-            tenantId: 'tenant-123',
-            userId: 'user-123',
+            tenantId: null,
             businessName: 'Test Pharmacy',
             contactName: 'John Doe',
             email: 'john@testpharmacy.com'
@@ -55,15 +48,14 @@ describe('RegisterVendorDTO', function () {
 
         $array = $dto->toArray();
 
-        expect($array)->toHaveKeys(['tenant_id', 'user_id', 'business_name', 'contact_name', 'email', 'status'])
+        expect($array)->toHaveKeys(['business_name', 'contact_name', 'email', 'status'])
             ->and($array['status'])->toBe('pending')
             ->and($array['country'])->toBe('Ghana');
     });
 
     test('includes optional fields in array when provided', function () {
         $dto = new RegisterVendorDTO(
-            tenantId: 'tenant-123',
-            userId: 'user-123',
+            tenantId: null,
             businessName: 'Test Pharmacy',
             contactName: 'John Doe',
             email: 'john@testpharmacy.com',
@@ -81,8 +73,7 @@ describe('RegisterVendorDTO', function () {
 
     test('validates successfully with valid data', function () {
         $dto = new RegisterVendorDTO(
-            tenantId: 'tenant-123',
-            userId: 'user-123',
+            tenantId: null,
             businessName: 'Test Pharmacy',
             contactName: 'John Doe',
             email: 'john@testpharmacy.com'
@@ -93,9 +84,8 @@ describe('RegisterVendorDTO', function () {
 
     test('validation fails with empty required fields', function () {
         $dto = new RegisterVendorDTO(
-            tenantId: '',
-            userId: 'user-123',
-            businessName: 'Test Pharmacy',
+            tenantId: null,
+            businessName: '', // Empty required field
             contactName: 'John Doe',
             email: 'john@testpharmacy.com'
         );
@@ -105,8 +95,7 @@ describe('RegisterVendorDTO', function () {
 
     test('validation fails with invalid email', function () {
         $dto = new RegisterVendorDTO(
-            tenantId: 'tenant-123',
-            userId: 'user-123',
+            tenantId: null,
             businessName: 'Test Pharmacy',
             contactName: 'John Doe',
             email: 'invalid-email'

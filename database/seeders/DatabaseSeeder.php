@@ -23,6 +23,11 @@ class DatabaseSeeder extends Seeder
             TenantSeeder::class,
         ]);
 
+        // Optionally seed vendors for development
+        if ($this->command->confirm('Do you want to seed sample vendors?', true)) {
+            $this->call(VendorSeeder::class);
+        }
+
         // User::factory(10)->create();
 
         User::factory()->create([

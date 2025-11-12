@@ -6,7 +6,6 @@ namespace App\Models\Concerns;
 
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Stancl\Tenancy\Facades\Tenancy;
 
 trait BelongsToTenant
 {
@@ -17,13 +16,13 @@ trait BelongsToTenant
     {
         // Automatically set tenant_id when creating
         static::creating(function (Model $model) {
-            if (Tenancy::initialized() && ! $model->getAttribute('tenant_id')) {
+            if (tenancy()->initialized && ! $model->getAttribute('tenant_id')) {
                 $model->setAttribute('tenant_id', tenant('id'));
             }
         });
 
         // Automatically scope all queries to current tenant
-        if (Tenancy::initialized()) {
+        if (tenancy()->initialized) {
             static::addGlobalScope('tenant', function (Builder $builder) {
                 $builder->where('tenant_id', tenant('id'));
             });
