@@ -34,8 +34,6 @@ final class UpdateTenantRequest extends FormRequest
                 'mimes:jpeg,jpg,png,gif,webp',
             ],
             'logo_url' => ['nullable', 'url', 'max:500'],
-            // Settings is always sent as JSON string from FormData
-            // Nested structure validation happens in DTO after JSON decode
             'settings' => ['nullable', 'json'],
         ];
     }
