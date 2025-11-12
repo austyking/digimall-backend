@@ -6,14 +6,18 @@ namespace App\Services;
 
 use App\DTOs\RegisterVendorDTO;
 use App\DTOs\UpdateVendorDTO;
+use App\Models\User;
 use App\Models\Vendor;
 use App\Repositories\Contracts\VendorRepositoryInterface;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 final readonly class VendorService
 {
     public function __construct(
-        private VendorRepositoryInterface $vendorRepository
+        private VendorRepositoryInterface $vendorRepository,
+        private UserService $userService
     ) {}
 
     /**
@@ -37,8 +41,35 @@ final readonly class VendorService
             throw new \RuntimeException("A vendor with email {$dto->email} already exists.");
         }
 
-        // Create vendor with pending status
-        return $this->vendorRepository->create($dto->toArray());
+        // Get current tenant
+        $tenant = tenancy()->tenant;
+        if (! $tenant) {
+            throw new \RuntimeException('No tenant context found for vendor registration.');
+        }
+
+        return DB::transaction(function () use ($dto, $tenant) {
+            // Create user account for the vendor
+            $result = $this->userService->createUserWithRandomPassword([
+                'name' => $dto->contactName,
+                'email' => $dto->email,
+                'email_verified_at' => now(),
+            ], 'vendor');
+
+            $user = $result['user'];
+            $password = $result['password'];
+            Log::info('Provisioned new user account for vendor', [
+                'user_id' => $user->id,
+                'email' => $dto->email,
+                'temporary_password' => $password,
+            ]);
+
+            // Create vendor with tenant and user
+            $vendorData = $dto->toArray();
+            $vendorData['tenant_id'] = $tenant->id;
+            $vendorData['user_id'] = $user->id;
+
+            return $this->vendorRepository->create($vendorData);
+        });
     }
 
     /**

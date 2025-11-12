@@ -32,9 +32,7 @@ final class RegisterVendorRequest extends FormRequest
     public function rules(): array
     {
         return [
-            // Required fields
-            'tenant_id' => ['required', 'string', 'exists:tenants,id'],
-            'user_id' => ['required', 'string', 'exists:users,id'],
+            // tenant_id is resolved from current tenant via middleware
             'business_name' => ['required', 'string', 'max:255'],
             'contact_name' => ['required', 'string', 'max:255'],
             'email' => [
@@ -43,6 +41,8 @@ final class RegisterVendorRequest extends FormRequest
                 'email',
                 'max:255',
                 Rule::unique('vendors', 'email'),
+                // Also ensure no user account exists with the same email
+                Rule::unique('users', 'email'),
             ],
 
             // Optional contact information
@@ -83,10 +83,7 @@ final class RegisterVendorRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'tenant_id.required' => 'Association/tenant is required.',
-            'tenant_id.exists' => 'The selected association does not exist.',
-            'user_id.required' => 'User account is required.',
-            'user_id.exists' => 'The selected user account does not exist.',
+            // no user_id validation messages (public registration creates a user)
             'business_name.required' => 'Business name is required.',
             'contact_name.required' => 'Contact person name is required.',
             'email.required' => 'Email address is required.',
@@ -108,7 +105,6 @@ final class RegisterVendorRequest extends FormRequest
     {
         return [
             'tenant_id' => 'association',
-            'user_id' => 'user account',
             'business_name' => 'business name',
             'contact_name' => 'contact person',
             'address_line_1' => 'address line 1',

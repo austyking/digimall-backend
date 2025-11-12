@@ -107,9 +107,12 @@ final class RolesAndPermissionsSeeder extends Seeder
 
         foreach ($permissionGroups as $group => $groupPermissions) {
             foreach ($groupPermissions as $permission) {
+                // Create permission for both web and api guards
                 $permissions[$permission] = Permission::firstOrCreate(
-                    ['name' => $permission],
-                    ['guard_name' => 'web']
+                    ['name' => $permission, 'guard_name' => 'web']
+                );
+                Permission::firstOrCreate(
+                    ['name' => $permission, 'guard_name' => 'api']
                 );
                 $this->info("    • {$permission}", 'vv');
             }
@@ -129,16 +132,22 @@ final class RolesAndPermissionsSeeder extends Seeder
 
         // System Administrator - Full access to everything
         $systemAdmin = Role::firstOrCreate(
-            ['name' => 'system-administrator'],
-            ['guard_name' => 'web']
+            ['name' => 'system-administrator', 'guard_name' => 'web']
         );
         $systemAdmin->syncPermissions($permissions);
         $this->info('    • system-administrator (all permissions)', 'vv');
 
+        // API guard version
+        $systemAdminApi = Role::firstOrCreate(
+            ['name' => 'system-administrator', 'guard_name' => 'api']
+        );
+        $systemAdminApi->syncPermissions(
+            Permission::where('guard_name', 'api')->pluck('name')
+        );
+
         // Association Administrator - Full access within their tenant
         $tenantAdmin = Role::firstOrCreate(
-            ['name' => 'association-administrator'],
-            ['guard_name' => 'web']
+            ['name' => 'association-administrator', 'guard_name' => 'web']
         );
         $tenantAdmin->syncPermissions([
             $permissions['manage-vendors'],
@@ -157,10 +166,29 @@ final class RolesAndPermissionsSeeder extends Seeder
         ]);
         $this->info('    • association-administrator', 'vv');
 
+        // API guard version
+        $tenantAdminApi = Role::firstOrCreate(
+            ['name' => 'association-administrator', 'guard_name' => 'api']
+        );
+        $tenantAdminApi->syncPermissions([
+            'manage-vendors',
+            'manage-categories',
+            'manage-brands',
+            'manage-attributes',
+            'manage-commission-rules',
+            'manage-tenant-settings',
+            'view-tenant-reports',
+            'view-all-orders',
+            'manage-all-orders',
+            'process-refunds',
+            'view-payouts',
+            'process-payouts',
+            'view-financial-reports',
+        ]);
+
         // Vendor - Manage their own products and orders
         $vendor = Role::firstOrCreate(
-            ['name' => 'vendor'],
-            ['guard_name' => 'web']
+            ['name' => 'vendor', 'guard_name' => 'web']
         );
         $vendor->syncPermissions([
             $permissions['manage-own-products'],
@@ -175,10 +203,25 @@ final class RolesAndPermissionsSeeder extends Seeder
         ]);
         $this->info('    • vendor', 'vv');
 
+        // API guard version
+        $vendorApi = Role::firstOrCreate(
+            ['name' => 'vendor', 'guard_name' => 'api']
+        );
+        $vendorApi->syncPermissions([
+            'manage-own-products',
+            'manage-own-orders',
+            'view-own-analytics',
+            'manage-own-profile',
+            'sync-cross-association',
+            'create-products',
+            'edit-products',
+            'delete-products',
+            'publish-products',
+        ]);
+
         // Member/Customer - Basic access to shop and order
         $member = Role::firstOrCreate(
-            ['name' => 'member'],
-            ['guard_name' => 'web']
+            ['name' => 'member', 'guard_name' => 'web']
         );
         $member->syncPermissions([
             $permissions['place-orders'],
@@ -187,6 +230,17 @@ final class RolesAndPermissionsSeeder extends Seeder
             $permissions['apply-hire-purchase'],
         ]);
         $this->info('    • member', 'vv');
+
+        // API guard version
+        $memberApi = Role::firstOrCreate(
+            ['name' => 'member', 'guard_name' => 'api']
+        );
+        $memberApi->syncPermissions([
+            'place-orders',
+            'view-own-orders',
+            'manage-own-profile',
+            'apply-hire-purchase',
+        ]);
     }
 
     /**

@@ -17,6 +17,9 @@ Route::prefix('v1/auth')->group(function (): void {
     Route::post('/login', LoginController::class)->name('auth.login');
 });
 
+// Backwards-compatible vendor login alias (some frontends call /vendor/login)
+Route::post('v1/vendor/login', LoginController::class)->name('vendor.login');
+
 // API v1 routes with tenant middleware
 Route::prefix('v1')->middleware([InitializeTenancyByDomain::class])->group(function (): void {
 
@@ -37,9 +40,8 @@ Route::prefix('v1')->middleware([InitializeTenancyByDomain::class])->group(funct
 
     // Vendor endpoints
     Route::prefix('vendors')->group(function (): void {
-        // Public registration (requires authentication)
+        // Public registration (no authentication required)
         Route::post('/register', [VendorController::class, 'register'])
-            ->middleware(['auth:api'])
             ->name('vendors.register');
 
         // Vendor listing and details
