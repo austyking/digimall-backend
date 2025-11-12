@@ -38,6 +38,10 @@ final class Vendor extends Model
     protected $casts = [
         'approved_at' => 'datetime',
         'rejected_at' => 'datetime',
+        'suspended_at' => 'datetime',
+        'commission_rate' => 'decimal:2',
+        'settings' => 'array',
+        'metadata' => 'array',
     ];
 
     /**

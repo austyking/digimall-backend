@@ -59,7 +59,7 @@ interface VendorRepositoryInterface
     /**
      * Get vendors by tenant ID.
      */
-    public function getByTenant(string $tenantId): Collection;
+    public function getByTenant(string $tenantId, ?int $limit = null): Collection;
 
     /**
      * Search vendors by query.
@@ -120,4 +120,14 @@ interface VendorRepositoryInterface
      * Reject vendor application.
      */
     public function reject(string $id, ?string $reason = null): Vendor;
+
+    /**
+     * Get vendors by status.
+     */
+    public function getByStatus(string $status, ?int $limit = null): Collection;
+
+    /**
+     * Suspend a vendor.
+     */
+    public function suspend(string $vendorId, ?string $reason = null): bool;
 }
