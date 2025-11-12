@@ -99,23 +99,46 @@ final class VendorRepository implements VendorRepositoryInterface
     /**
      * Get vendors by tenant ID.
      */
-    public function getByTenant(string $tenantId): Collection
+    public function getByTenant(string $tenantId, ?int $limit = null): Collection
     {
-        return Vendor::query()
-            ->where('tenant_id', $tenantId)
-            ->get();
+        $query = Vendor::query()->where('tenant_id', $tenantId);
+
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query->get();
+    }
+
+    /**
+     * Get vendors by status.
+     */
+    public function getByStatus(string $status, ?int $limit = null): Collection
+    {
+        $query = Vendor::query()->where('status', $status);
+
+        if ($limit !== null) {
+            $query->limit($limit);
+        }
+
+        return $query->get();
     }
 
     /**
      * Search vendors by query.
      */
-    public function search(string $query): Collection
+    public function search(string $query, ?int $limit = null): Collection
     {
-        return Vendor::query()
+        $searchQuery = Vendor::query()
             ->where('business_name', 'like', "%{$query}%")
             ->orWhere('contact_name', 'like', "%{$query}%")
-            ->orWhere('email', 'like', "%{$query}%")
-            ->get();
+            ->orWhere('email', 'like', "%{$query}%");
+
+        if ($limit !== null) {
+            $searchQuery->limit($limit);
+        }
+
+        return $searchQuery->get();
     }
 
     /**
@@ -272,5 +295,28 @@ final class VendorRepository implements VendorRepositoryInterface
         }
 
         return $this->update($id, $data);
+    }
+
+    /**
+     * Suspend a vendor.
+     */
+    public function suspend(string $vendorId, ?string $reason = null): bool
+    {
+        try {
+            $data = [
+                'status' => 'suspended',
+                'suspended_at' => now(),
+            ];
+
+            if ($reason !== null) {
+                $data['suspension_reason'] = $reason;
+            }
+
+            $this->update($vendorId, $data);
+
+            return true;
+        } catch (\Exception $e) {
+            return false;
+        }
     }
 }

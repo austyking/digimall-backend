@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTOs\RegisterVendorDTO;
+use App\DTOs\UpdateVendorDTO;
 use App\Models\Vendor;
 use App\Repositories\Contracts\VendorRepositoryInterface;
 use Illuminate\Support\Collection;
@@ -15,11 +17,55 @@ final readonly class VendorService
     ) {}
 
     /**
+     * Register a new vendor.
+     *
+     * Creates a new vendor account with 'pending' status awaiting admin approval.
+     * Validates email uniqueness and applies business rules.
+     *
+     * @throws \InvalidArgumentException If DTO validation fails
+     * @throws \RuntimeException If email already exists
+     */
+    public function registerVendor(RegisterVendorDTO $dto): Vendor
+    {
+        // Validate DTO
+        if (! $dto->validate()) {
+            throw new \InvalidArgumentException('Invalid vendor registration data provided.');
+        }
+
+        // Check email uniqueness
+        if ($this->vendorRepository->emailExists($dto->email)) {
+            throw new \RuntimeException("A vendor with email {$dto->email} already exists.");
+        }
+
+        // Create vendor with pending status
+        return $this->vendorRepository->create($dto->toArray());
+    }
+
+    /**
      * Find a vendor by ID.
      */
     public function findById(string $id): ?Vendor
     {
         return $this->vendorRepository->find($id);
+    }
+
+    /**
+     * Update vendor profile.
+     *
+     * Updates vendor information with provided data.
+     * Only non-null fields in DTO will be updated.
+     *
+     * @throws \RuntimeException If vendor not found
+     */
+    public function updateVendor(string $vendorId, UpdateVendorDTO $dto): Vendor
+    {
+        $updateData = $dto->toArray();
+
+        if (empty($updateData)) {
+            throw new \InvalidArgumentException('No update data provided.');
+        }
+
+        return $this->vendorRepository->update($vendorId, $updateData);
     }
 
     /**
@@ -41,9 +87,9 @@ final readonly class VendorService
     /**
      * Get all vendors for a tenant.
      */
-    public function getAllVendors(?int $limit = null): Collection
+    public function getAllVendors(string $tenantId, ?int $limit = null): Collection
     {
-        return $this->vendorRepository->getByTenant($limit);
+        return $this->vendorRepository->getByTenant($tenantId, $limit);
     }
 
     /**
@@ -81,7 +127,7 @@ final readonly class VendorService
     /**
      * Approve a vendor.
      */
-    public function approveVendor(string $vendorId): bool
+    public function approveVendor(string $vendorId): Vendor
     {
         return $this->vendorRepository->approve($vendorId);
     }
@@ -89,7 +135,7 @@ final readonly class VendorService
     /**
      * Reject a vendor.
      */
-    public function rejectVendor(string $vendorId, ?string $reason = null): bool
+    public function rejectVendor(string $vendorId, ?string $reason = null): Vendor
     {
         return $this->vendorRepository->reject($vendorId, $reason);
     }
