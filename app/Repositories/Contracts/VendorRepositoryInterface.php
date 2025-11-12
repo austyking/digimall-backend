@@ -129,5 +129,5 @@ interface VendorRepositoryInterface
     /**
      * Suspend a vendor.
      */
-    public function suspend(string $vendorId, ?string $reason = null): bool;
+    public function suspend(string $vendorId, ?string $reason = null): Vendor;
 }

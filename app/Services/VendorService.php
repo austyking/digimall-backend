@@ -93,6 +93,14 @@ final readonly class VendorService
     }
 
     /**
+     * Get all vendors for a tenant (alias for consistency with controller).
+     */
+    public function getAllForTenant(string $tenantId, ?int $limit = null): Collection
+    {
+        return $this->getAllVendors($tenantId, $limit);
+    }
+
+    /**
      * Get vendors by status.
      */
     public function getByStatus(string $status, ?int $limit = null): Collection
@@ -143,7 +151,7 @@ final readonly class VendorService
     /**
      * Suspend a vendor.
      */
-    public function suspendVendor(string $vendorId, ?string $reason = null): bool
+    public function suspendVendor(string $vendorId, ?string $reason = null): Vendor
     {
         return $this->vendorRepository->suspend($vendorId, $reason);
     }

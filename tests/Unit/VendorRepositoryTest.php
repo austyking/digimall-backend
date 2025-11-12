@@ -235,11 +235,10 @@ describe('VendorRepository', function () {
 
         $suspended = $this->repository->suspend($vendor->id, 'Violation');
 
-        expect($suspended)->toBeTrue();
-
-        $vendor->refresh();
-        expect($vendor->status)->toBe('suspended')
-            ->and($vendor->suspended_at)->not()->toBeNull();
+        expect($suspended)->toBeInstanceOf(Vendor::class)
+            ->and($suspended->status)->toBe('suspended')
+            ->and($suspended->suspended_at)->not()->toBeNull()
+            ->and($suspended->suspension_reason)->toBe('Violation');
     });
 
     test('checks if vendor exists', function () {
