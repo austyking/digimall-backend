@@ -7,6 +7,7 @@ use App\Http\Controllers\Api\Tenant\ShowTenantConfigController;
 use App\Http\Controllers\Api\V1\Admin\AdminTenantController;
 use App\Http\Controllers\Api\V1\Admin\TenantStatisticsController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
+use App\Http\Controllers\Api\V1\VendorController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
 use Stancl\Tenancy\Middleware\InitializeTenancyByDomain;
@@ -32,6 +33,39 @@ Route::prefix('v1')->middleware([InitializeTenancyByDomain::class])->group(funct
             'tenant_id' => $tenant?->id,
             'tenant_name' => $tenant?->name,
         ]);
+    });
+
+    // Vendor endpoints
+    Route::prefix('vendors')->group(function (): void {
+        // Public registration (requires authentication)
+        Route::post('/register', [VendorController::class, 'register'])
+            ->middleware(['auth:api'])
+            ->name('vendors.register');
+
+        // Vendor listing and details
+        Route::get('/', [VendorController::class, 'index'])
+            ->middleware(['auth:api'])
+            ->name('vendors.index');
+
+        Route::get('/{id}', [VendorController::class, 'show'])
+            ->name('vendors.show');
+
+        // Vendor profile management (vendor only)
+        Route::put('/{id}', [VendorController::class, 'update'])
+            ->middleware(['auth:api'])
+            ->name('vendors.update');
+
+        // Admin actions (admin/system-administrator only)
+        Route::middleware(['auth:api'])->group(function (): void {
+            Route::post('/{id}/approve', [VendorController::class, 'approve'])
+                ->name('vendors.approve');
+
+            Route::post('/{id}/reject', [VendorController::class, 'reject'])
+                ->name('vendors.reject');
+
+            Route::post('/{id}/suspend', [VendorController::class, 'suspend'])
+                ->name('vendors.suspend');
+        });
     });
 
     // Additional API routes will go here

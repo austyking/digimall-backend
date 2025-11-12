@@ -271,15 +271,23 @@ describe('VendorService', function () {
     });
 
     test('suspends vendor', function () {
+        // Repository should return suspended vendor after suspension
+        $vendor = new Vendor([
+            'id' => 'vendor-123',
+            'status' => 'suspended',
+        ]);
+
         $this->mockRepository
             ->shouldReceive('suspend')
             ->with('vendor-123', 'Violation')
             ->once()
-            ->andReturn(true);
+            ->andReturn($vendor);
 
         $result = $this->service->suspendVendor('vendor-123', 'Violation');
 
-        expect($result)->toBeTrue();
+        expect($result)->toBeInstanceOf(Vendor::class)
+            ->and($result->id)->toBe('vendor-123')
+            ->and($result->status)->toBe('suspended');
     });
 
     test('gets vendor statistics', function () {

@@ -300,23 +300,17 @@ final class VendorRepository implements VendorRepositoryInterface
     /**
      * Suspend a vendor.
      */
-    public function suspend(string $vendorId, ?string $reason = null): bool
+    public function suspend(string $vendorId, ?string $reason = null): Vendor
     {
-        try {
-            $data = [
-                'status' => 'suspended',
-                'suspended_at' => now(),
-            ];
+        $data = [
+            'status' => 'suspended',
+            'suspended_at' => now(),
+        ];
 
-            if ($reason !== null) {
-                $data['suspension_reason'] = $reason;
-            }
-
-            $this->update($vendorId, $data);
-
-            return true;
-        } catch (\Exception $e) {
-            return false;
+        if ($reason !== null) {
+            $data['suspension_reason'] = $reason;
         }
+
+        return $this->update($vendorId, $data);
     }
 }

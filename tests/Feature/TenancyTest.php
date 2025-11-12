@@ -398,19 +398,21 @@ test('uses default colors when theme settings are missing', function () {
 });
 
 // API ENDPOINT TESTS
-test('resolves GRNMA tenant by test domain', function () {
-    $this->get('http://shop.grnmainfonet.test/api/v1/health')
-        ->assertStatus(200)
-        ->assertJson(['status' => 'ok', 'tenant_name' => 'GRNMA']);
-});
+describe('API Endpoints with Tenancy Middleware', function () {
+    test('resolves GRNMA tenant by test domain', function () {
+        $this->get('http://shop.grnmainfonet.test/api/v1/health')
+            ->assertStatus(200)
+            ->assertJson(['status' => 'ok', 'tenant_name' => 'GRNMA']);
+    });
 
-test('returns complete config for GRNMA tenant', function () {
-    $response = $this->get('http://shop.grnmainfonet.test/api/v1/config');
-    $data = $response->json();
+    test('returns complete config for GRNMA tenant', function () {
+        $response = $this->get('http://shop.grnmainfonet.test/api/v1/config');
+        $data = $response->json();
 
-    expect($data['data']['tenant']['name'])->toBe('GRNMA')
-        ->and($data['data']['branding']['primary_color'])->toBe('#1976d2')
-        ->and($data['data']['features']['hire_purchase'])->toBeTrue();
+        expect($data['data']['tenant']['name'])->toBe('GRNMA')
+            ->and($data['data']['branding']['primary_color'])->toBe('#1976d2')
+            ->and($data['data']['features']['hire_purchase'])->toBeTrue();
+    });
 });
 
 // MULTI-TENANT ISOLATION TESTS
