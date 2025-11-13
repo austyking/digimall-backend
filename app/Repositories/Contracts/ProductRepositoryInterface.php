@@ -4,8 +4,9 @@ declare(strict_types=1);
 
 namespace App\Repositories\Contracts;
 
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
-use Lunar\Models\Product;
+use App\Models\Product;
 
 interface ProductRepositoryInterface
 {
@@ -27,9 +28,10 @@ interface ProductRepositoryInterface
     /**
      * Get products with pagination.
      *
-     * @return \Illuminate\Contracts\Pagination\LengthAwarePaginator
+     * @param int $perPage
+     * @return LengthAwarePaginator
      */
-    public function paginate(int $perPage = 15);
+    public function paginate(int $perPage = 15): LengthAwarePaginator;
 
     /**
      * Get active products only.
@@ -45,6 +47,11 @@ interface ProductRepositoryInterface
      * Search products by query.
      */
     public function search(string $query): Collection;
+
+    /**
+     * Filter products by criteria.
+     */
+    public function filter(array $filters): Collection;
 
     /**
      * Get products by collection ID.
@@ -100,4 +107,14 @@ interface ProductRepositoryInterface
      * Update product stock.
      */
     public function updateStock(string $id, int $quantity): bool;
+
+    /**
+     * Check if product is available.
+     */
+    public function isAvailable(string $id): bool;
+
+    /**
+     * Get available quantity for a product.
+     */
+    public function getAvailableQuantity(string $id): int;
 }
