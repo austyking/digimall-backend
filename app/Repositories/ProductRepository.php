@@ -166,9 +166,9 @@ final class ProductRepository implements ProductRepositoryInterface
                     $query->orderBy('attribute_data->name', $direction);
                     break;
                 case 'price':
-                    $query->leftJoin('lunar_product_variants', 'lunar_products.id', '=', 'lunar_product_variants.product_id')
-                        ->orderBy('lunar_product_variants.price', $direction)
-                        ->select('lunar_products.*');
+                    $query->leftJoin('product_variants', 'products.id', '=', 'product_variants.product_id')
+                        ->orderBy('product_variants.price', $direction)
+                        ->select('products.*');
                     break;
                 case 'created_at':
                     $query->orderBy('created_at', $direction);

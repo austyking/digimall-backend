@@ -23,27 +23,27 @@ final class CreateProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'product_type_id' => ['required', 'string', 'exists:lunar_product_types,id'],
+            'product_type_id' => ['required', 'string', 'exists:product_types,id'],
             'name' => ['required', 'string', 'max:255'],
             'status' => ['required', 'string', 'in:draft,published'],
-            'brand_id' => ['nullable', 'string', 'exists:lunar_brands,id'],
+            'brand_id' => ['nullable', 'string', 'exists:brands,id'],
             'attribute_data' => ['required', 'array'],
             'attribute_data.name' => ['required', 'string', 'max:255'],
             'attribute_data.description' => ['nullable', 'string'],
             'attribute_data.short_description' => ['nullable', 'string'],
-            'attribute_data.sku' => ['required', 'string', 'unique:lunar_products,sku'],
+            'attribute_data.sku' => ['required', 'string', 'unique:products,sku'],
             'attribute_data.images' => ['nullable', 'array'],
             'attribute_data.images.*' => ['string', 'url'],
             'variants' => ['nullable', 'array'],
             'variants.*.name' => ['required', 'string'],
-            'variants.*.sku' => ['required', 'string', 'unique:lunar_product_variants,sku'],
+            'variants.*.sku' => ['required', 'string', 'unique:product_variants,sku'],
             'variants.*.price' => ['required', 'numeric', 'min:0'],
             'variants.*.stock' => ['required', 'integer', 'min:0'],
             'variants.*.purchasable' => ['boolean'],
             'collections' => ['nullable', 'array'],
-            'collections.*' => ['string', 'exists:lunar_collections,id'],
+            'collections.*' => ['string', 'exists:collections,id'],
             'tags' => ['nullable', 'array'],
-            'tags.*' => ['string', 'exists:lunar_tags,id'],
+            'tags.*' => ['string', 'exists:tags,id'],
         ];
     }
 

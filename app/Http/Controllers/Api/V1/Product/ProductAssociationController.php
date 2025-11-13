@@ -188,40 +188,38 @@ class ProductAssociationController extends Controller
     /**
      * Get up-sell products for a product.
      */
-    public function getUpSell(string $productId): JsonResponse
+    public function getUpSell(string $productId): AnonymousResourceCollection
     {
-        $product = Product::findOrFail($productId);
+        $product = $this->productService->findById($productId);
 
-        $upSellProducts = $product->associations()
-            ->upSell()
-            ->with(['target' => function ($query) {
-                $query->with(['brand', 'productType', 'variants']);
-            }])
-            ->get()
-            ->pluck('target');
+        if (! $product) {
+            abort(404, 'Product not found');
+        }
 
-        return response()->json([
-            'data' => $upSellProducts,
-        ]);
+        $product->load(['associations' => function ($query) {
+            $query->where('type', ProductAssociation::UP_SELL)
+                ->with(['target.brand', 'target.productType', 'target.variants']);
+        }]);
+
+        return ProductAssociationResource::collection($product->associations);
     }
 
     /**
      * Get alternate products for a product.
      */
-    public function getAlternate(string $productId): JsonResponse
+    public function getAlternate(string $productId): AnonymousResourceCollection
     {
-        $product = Product::findOrFail($productId);
+        $product = $this->productService->findById($productId);
 
-        $alternateProducts = $product->associations()
-            ->alternate()
-            ->with(['target' => function ($query) {
-                $query->with(['brand', 'productType', 'variants']);
-            }])
-            ->get()
-            ->pluck('target');
+        if (! $product) {
+            abort(404, 'Product not found');
+        }
 
-        return response()->json([
-            'data' => $alternateProducts,
-        ]);
+        $product->load(['associations' => function ($query) {
+            $query->where('type', ProductAssociation::ALTERNATE)
+                ->with(['target.brand', 'target.productType', 'target.variants']);
+        }]);
+
+        return ProductAssociationResource::collection($product->associations);
     }
 }

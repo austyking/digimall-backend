@@ -54,9 +54,9 @@ final class ProductVariantResource extends JsonResource
                             'id' => $price->currency->id,
                             'code' => $price->currency->code,
                             'name' => $price->currency->name,
-                            'symbol' => $price->currency->exchange_rate,
+                            'exchange_rate' => $price->currency->exchange_rate,
                         ],
-                        'tier' => $price->tier,
+                        'min_quantity' => $price->min_quantity,
                         'customer_group_id' => $price->customer_group_id,
                     ];
                 });

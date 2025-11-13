@@ -28,7 +28,7 @@ final class GenerateProductSlugRequest extends FormRequest
     {
         return [
             'name' => ['required', 'string', 'max:255'],
-            'language_id' => ['required', 'exists:lunar_languages,id'],
+            'language_id' => ['required', 'exists:languages,id'],
         ];
     }
 

@@ -31,10 +31,10 @@ final readonly class UpdateProductVariantDTO
             'purchasable' => 'sometimes|required|string|in:always,in_stock,backorder',
             'price' => 'sometimes|required|numeric|min:0',
             'unit_quantity' => 'nullable|integer|min:1',
-            'tax_class_id' => 'nullable|integer|exists:lunar_tax_classes,id',
+            'tax_class_id' => 'nullable|integer|exists:tax_classes,id',
             'backorder' => 'nullable|integer|min:0',
             'values' => 'nullable|array',
-            'values.*' => 'integer|exists:lunar_product_option_values,id',
+            'values.*' => 'integer|exists:product_option_values,id',
         ]);
 
         if ($validator->fails()) {

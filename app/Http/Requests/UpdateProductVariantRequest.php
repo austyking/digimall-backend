@@ -29,12 +29,12 @@ final class UpdateProductVariantRequest extends FormRequest
         $variantId = $this->route('variantId');
 
         return [
-            'sku' => ['sometimes', 'string', 'max:255', 'unique:lunar_product_variants,sku,'.$variantId],
+            'sku' => ['sometimes', 'string', 'max:255', 'unique:product_variants,sku,'.$variantId],
             'stock' => ['sometimes', 'integer', 'min:0'],
             'purchasable' => ['sometimes', 'boolean'],
             'price' => ['sometimes', 'numeric', 'min:0'],
             'unit_quantity' => ['sometimes', 'integer', 'min:1'],
-            'tax_class_id' => ['sometimes', 'string', 'exists:lunar_tax_classes,id'],
+            'tax_class_id' => ['sometimes', 'string', 'exists:tax_classes,id'],
             'backorder' => ['sometimes', 'boolean'],
             'values' => ['sometimes', 'array'], // Option values for variant
             'values.*' => ['sometimes', 'string'],

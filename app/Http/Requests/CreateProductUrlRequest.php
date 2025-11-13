@@ -28,7 +28,7 @@ final class CreateProductUrlRequest extends FormRequest
     {
         return [
             'slug' => ['required', 'string', 'max:255'],
-            'language_id' => ['required', 'exists:lunar_languages,id'],
+            'language_id' => ['required', 'exists:languages,id'],
             'default' => ['nullable', 'boolean'],
         ];
     }

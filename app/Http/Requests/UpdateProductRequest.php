@@ -25,27 +25,27 @@ final class UpdateProductRequest extends FormRequest
         $productId = $this->route('product');
 
         return [
-            'product_type_id' => ['sometimes', 'string', 'exists:lunar_product_types,id'],
+            'product_type_id' => ['sometimes', 'string', 'exists:product_types,id'],
             'name' => ['sometimes', 'string', 'max:255'],
             'status' => ['sometimes', 'string', 'in:draft,published'],
-            'brand_id' => ['nullable', 'string', 'exists:lunar_brands,id'],
+            'brand_id' => ['nullable', 'string', 'exists:brands,id'],
             'attribute_data' => ['sometimes', 'array'],
             'attribute_data.name' => ['sometimes', 'string', 'max:255'],
             'attribute_data.description' => ['nullable', 'string'],
             'attribute_data.short_description' => ['nullable', 'string'],
-            'attribute_data.sku' => ['sometimes', 'string', 'unique:lunar_products,sku,'.$productId],
+            'attribute_data.sku' => ['sometimes', 'string', 'unique:products,sku,'.$productId],
             'attribute_data.images' => ['nullable', 'array'],
             'attribute_data.images.*' => ['string', 'url'],
             'variants' => ['nullable', 'array'],
             'variants.*.name' => ['sometimes', 'string'],
-            'variants.*.sku' => ['sometimes', 'string', 'unique:lunar_product_variants,sku'],
+            'variants.*.sku' => ['sometimes', 'string', 'unique:product_variants,sku'],
             'variants.*.price' => ['sometimes', 'numeric', 'min:0'],
             'variants.*.stock' => ['sometimes', 'integer', 'min:0'],
             'variants.*.purchasable' => ['boolean'],
             'collections' => ['nullable', 'array'],
-            'collections.*' => ['string', 'exists:lunar_collections,id'],
+            'collections.*' => ['string', 'exists:collections,id'],
             'tags' => ['nullable', 'array'],
-            'tags.*' => ['string', 'exists:lunar_tags,id'],
+            'tags.*' => ['string', 'exists:tags,id'],
         ];
     }
 

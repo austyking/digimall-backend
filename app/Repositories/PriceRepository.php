@@ -80,7 +80,7 @@ final class PriceRepository implements PriceRepositoryInterface
     }
 
     /**
-     * Find price by priceable, currency, and tier.
+     * Find price by priceable, currency, and minimum quantity.
      */
     public function findByPriceableAndCurrency(string $priceableId, string $priceableType, int $currencyId, int $minQuantity = 1): ?Price
     {

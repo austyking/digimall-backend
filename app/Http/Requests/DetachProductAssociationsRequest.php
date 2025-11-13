@@ -28,7 +28,7 @@ final class DetachProductAssociationsRequest extends FormRequest
     {
         return [
             'product_ids' => ['required', 'array', 'min:1'],
-            'product_ids.*' => ['required', 'string', 'exists:lunar_products,id'],
+            'product_ids.*' => ['required', 'string', 'exists:products,id'],
             'type' => ['sometimes', 'string', 'in:cross-sell,up-sell,alternate'],
         ];
     }
