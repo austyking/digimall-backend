@@ -4,10 +4,10 @@ declare(strict_types=1);
 
 namespace App\Repositories;
 
+use App\Models\Product;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
-use Lunar\Models\Product;
 
 final class ProductRepository implements ProductRepositoryInterface
 {
@@ -76,6 +76,124 @@ final class ProductRepository implements ProductRepositoryInterface
             ->where('name', 'like', "%{$query}%")
             ->orWhere('description', 'like', "%{$query}%")
             ->get();
+    }
+
+    /**
+     * Filter products by criteria.
+     */
+    public function filter(array $filters): Collection
+    {
+        $query = Product::query();
+
+        // Text search
+        if (! empty($filters['query'])) {
+            $query->where(function ($q) use ($filters): void {
+                $q->where('attribute_data->name', 'like', '%'.$filters['query'].'%')
+                    ->orWhere('attribute_data->description', 'like', '%'.$filters['query'].'%')
+                    ->orWhere('attribute_data->short_description', 'like', '%'.$filters['query'].'%');
+            });
+        }
+
+        // Status filter
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        // Brand filter
+        if (! empty($filters['brand_id'])) {
+            $query->where('brand_id', $filters['brand_id']);
+        }
+
+        // Product type filter
+        if (! empty($filters['product_type_id'])) {
+            $query->where('product_type_id', $filters['product_type_id']);
+        }
+
+        // Vendor filter
+        if (! empty($filters['vendor_id'])) {
+            $query->where('vendor_id', $filters['vendor_id']);
+        }
+
+        // ID filter (for whereIn scenarios)
+        if (! empty($filters['id']) && is_array($filters['id'])) {
+            $query->whereIn('id', $filters['id']);
+        }
+
+        // Collection filter
+        if (! empty($filters['collection_id'])) {
+            $query->whereHas('collections', function ($q) use ($filters): void {
+                $q->where('collection_id', $filters['collection_id']);
+            });
+        }
+
+        // Tags filter
+        if (! empty($filters['tags']) && is_array($filters['tags'])) {
+            $query->whereHas('tags', function ($q) use ($filters): void {
+                $q->whereIn('tag_id', $filters['tags']);
+            });
+        }
+
+        // Price range filter
+        if (isset($filters['min_price']) || isset($filters['max_price'])) {
+            $query->whereHas('variants', function ($q) use ($filters): void {
+                if (isset($filters['min_price'])) {
+                    $q->where('price', '>=', $filters['min_price']);
+                }
+                if (isset($filters['max_price'])) {
+                    $q->where('price', '<=', $filters['max_price']);
+                }
+            });
+        }
+
+        // In stock filter
+        if (isset($filters['in_stock'])) {
+            if ($filters['in_stock']) {
+                $query->whereHas('variants', function ($q): void {
+                    $q->where('stock', '>', 0)->where('purchasable', true);
+                });
+            } else {
+                $query->whereDoesntHave('variants', function ($q): void {
+                    $q->where('stock', '>', 0)->where('purchasable', true);
+                });
+            }
+        }
+
+        // Sorting
+        if (! empty($filters['sort_by'])) {
+            $direction = $filters['sort_direction'] ?? 'asc';
+            switch ($filters['sort_by']) {
+                case 'name':
+                    $query->orderBy('attribute_data->name', $direction);
+                    break;
+                case 'price':
+                    $query->leftJoin('product_variants', 'products.id', '=', 'product_variants.product_id')
+                        ->orderBy('product_variants.price', $direction)
+                        ->select('products.*');
+                    break;
+                case 'created_at':
+                    $query->orderBy('created_at', $direction);
+                    break;
+                case 'updated_at':
+                    $query->orderBy('updated_at', $direction);
+                    break;
+                default:
+                    $query->orderBy('created_at', 'desc');
+            }
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
+        // Limit
+        if (! empty($filters['limit'])) {
+            $query->limit($filters['limit']);
+        }
+
+        // Offset
+        if (! empty($filters['offset'])) {
+            $query->offset($filters['offset']);
+        }
+
+        return $query->get();
     }
 
     /**
@@ -209,5 +327,41 @@ final class ProductRepository implements ProductRepositoryInterface
         $variant->stock = $quantity;
 
         return $variant->save();
+    }
+
+    public function isAvailable(string $id): bool
+    {
+        $product = $this->find($id);
+
+        if ($product === null) {
+            return false;
+        }
+
+        // Check the default variant's stock
+        $variant = $product->variants()->first();
+
+        if ($variant === null) {
+            return false;
+        }
+
+        return $variant->stock > 0;
+    }
+
+    public function getAvailableQuantity(string $id): int
+    {
+        $product = $this->find($id);
+
+        if ($product === null) {
+            return 0;
+        }
+
+        // Get the default variant's stock
+        $variant = $product->variants()->first();
+
+        if ($variant === null) {
+            return 0;
+        }
+
+        return $variant->stock;
     }
 }
