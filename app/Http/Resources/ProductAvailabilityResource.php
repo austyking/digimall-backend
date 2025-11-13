@@ -29,13 +29,21 @@ class ProductAvailabilityResource extends JsonResource
             'status' => $this->status,
             'variants' => $this->whenLoaded('variants', function () {
                 return $this->variants->map(function ($variant) {
+                    // Determine availability based on purchasable mode
+                    $isAvailable = match ($variant->purchasable) {
+                        'always' => true,
+                        'in_stock' => $variant->stock > 0,
+                        'backorder' => $variant->stock > 0 || $variant->backorder > 0,
+                        default => false,
+                    };
+
                     return [
                         'id' => $variant->id,
                         'sku' => $variant->sku,
                         'stock' => $variant->stock,
                         'purchasable' => $variant->purchasable,
                         'backorder' => $variant->backorder,
-                        'is_available' => $variant->purchasable && $variant->stock > 0,
+                        'is_available' => $isAvailable,
                     ];
                 });
             }),

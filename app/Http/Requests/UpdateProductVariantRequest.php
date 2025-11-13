@@ -31,11 +31,11 @@ final class UpdateProductVariantRequest extends FormRequest
         return [
             'sku' => ['sometimes', 'string', 'max:255', 'unique:product_variants,sku,'.$variantId],
             'stock' => ['sometimes', 'integer', 'min:0'],
-            'purchasable' => ['sometimes', 'boolean'],
+            'purchasable' => ['sometimes', 'string', 'in:always,in_stock,backorder'],
             'price' => ['sometimes', 'numeric', 'min:0'],
             'unit_quantity' => ['sometimes', 'integer', 'min:1'],
             'tax_class_id' => ['sometimes', 'string', 'exists:tax_classes,id'],
-            'backorder' => ['sometimes', 'boolean'],
+            'backorder' => ['sometimes', 'integer', 'min:0'],
             'values' => ['sometimes', 'array'], // Option values for variant
             'values.*' => ['sometimes', 'string'],
         ];

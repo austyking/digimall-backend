@@ -48,7 +48,7 @@ final class ProductInventoryController extends Controller
                         'sku' => $variant->sku,
                         'stock' => $variant->stock,
                         'purchasable' => $variant->purchasable,
-                        'backorder' => $variant->backorder ?? false,
+                        'backorder' => $variant->backorder ?? 0,
                     ];
                 }),
             ],
