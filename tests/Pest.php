@@ -10,6 +10,8 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 |--------------------------------------------------------------------------
 */
 
+ini_set('memory_limit', '2048M');
+
 pest()->extend(Tests\TestCase::class)
     ->use(RefreshDatabase::class)
     ->in('Feature', 'Integration');

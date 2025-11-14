@@ -12,6 +12,44 @@ use Lunar\Models\Url;
 final class UrlRepository implements UrlRepositoryInterface
 {
     /**
+     * Get all URLs for an element (Product) by element ID and type.
+     */
+    public function findByElement(int $elementId, string $elementType): Collection
+    {
+        return Url::query()
+            ->where('element_id', $elementId)
+            ->where('element_type', $elementType)
+            ->with('language')
+            ->get();
+    }
+
+    /**
+     * Get URLs for an element and language.
+     */
+    public function findByElementAndLanguage(int $elementId, string $elementType, int $languageId): Collection
+    {
+        return Url::query()
+            ->where('element_id', $elementId)
+            ->where('element_type', $elementType)
+            ->where('language_id', $languageId)
+            ->with('language')
+            ->get();
+    }
+
+    /**
+     * Get default URL by element ID and language ID - for test compatibility.
+     */
+    public function getDefaultUrl(int $elementId, string $elementType, int $languageId): ?Url
+    {
+        return Url::query()
+            ->where('element_id', $elementId)
+            ->where('element_type', $elementType)
+            ->where('language_id', $languageId)
+            ->where('default', true)
+            ->first();
+    }
+
+    /**
      * Find a URL by ID.
      */
     public function find(int $id): ?Url
@@ -20,21 +58,9 @@ final class UrlRepository implements UrlRepositoryInterface
     }
 
     /**
-     * Get all URLs for an element (Product).
-     */
-    public function getByElement(string $elementType, string $elementId): Collection
-    {
-        return Url::query()
-            ->where('element_type', $elementType)
-            ->where('element_id', $elementId)
-            ->with('language')
-            ->get();
-    }
-
-    /**
      * Get default URL for an element and language.
      */
-    public function getDefaultForElement(string $elementType, string $elementId, int $languageId): ?Url
+    public function getDefaultForElement(string $elementType, int $elementId, int $languageId): ?Url
     {
         return Url::query()
             ->where('element_type', $elementType)

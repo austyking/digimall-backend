@@ -74,12 +74,26 @@ final class ProductController extends Controller
         }
 
         if (! empty($filters)) {
-            $products = $this->productService->filterProducts($filters);
-        } else {
-            $products = $this->productService->getAllProducts($filterDTO->limit);
-        }
+            // If limit/per_page is set, use paginator
+            if (! empty($filters['limit']) || ! empty($filters['per_page'])) {
+                $perPage = $filters['limit'] ?? $filters['per_page'] ?? 15;
+                $products = $this->productService->getPaginatedProducts($perPage, $filters);
 
-        return ProductResource::collection($products);
+                return ProductResource::collection($products);
+            } else {
+                $products = $this->productService->filterProducts($filters);
+
+                return ProductResource::collection($products);
+            }
+        } elseif ($filterDTO->limit) {
+            $products = $this->productService->getPaginatedProducts($filterDTO->limit);
+
+            return ProductResource::collection($products);
+        } else {
+            $products = $this->productService->getAllProducts();
+
+            return ProductResource::collection($products);
+        }
     }
 
     /**
@@ -105,7 +119,7 @@ final class ProductController extends Controller
     /**
      * Display the specified product.
      */
-    public function show(Request $request, string $productId): ProductResource
+    public function show(Request $request, int $productId): ProductResource
     {
         $product = $this->productService->findById($productId);
 
@@ -125,7 +139,7 @@ final class ProductController extends Controller
     /**
      * Update the specified product.
      */
-    public function update(UpdateProductRequest $request, string $productId): ProductResource
+    public function update(UpdateProductRequest $request, int $productId): ProductResource
     {
         $user = $request->user();
         $vendor = $user->vendor;
@@ -146,7 +160,7 @@ final class ProductController extends Controller
         }
 
         $dto = UpdateProductDTO::fromRequest($request->all());
-        $product = $this->productService->updateProduct($productId, $dto);
+        $product = $this->productService->updateProduct((int) $productId, $dto);
 
         return new ProductResource($product);
     }
@@ -154,7 +168,7 @@ final class ProductController extends Controller
     /**
      * Remove the specified product.
      */
-    public function destroy(Request $request, string $productId): JsonResponse
+    public function destroy(Request $request, int $productId): JsonResponse
     {
         $user = $request->user();
         $vendor = $user->vendor;

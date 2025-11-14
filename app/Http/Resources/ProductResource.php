@@ -30,6 +30,7 @@ final class ProductResource extends JsonResource
             'description' => $this->resource->translateAttribute('description'),
             'sku' => $this->resource->translateAttribute('sku'),
             'status' => $this->resource->status,
+            'vendor_id' => $this->resource->vendor_id,
 
             // Product type and brand
             'product_type' => $this->whenLoaded('productType', function () {
@@ -135,7 +136,7 @@ final class ProductResource extends JsonResource
 
             // Metadata
             'attribute_data' => $this->resource->attribute_data,
-            'metadata' => $this->resource->getMeta(),
+            // 'metadata' => $this->resource->getMeta(),
 
             // Timestamps
             'created_at' => $this->resource->created_at->toISOString(),

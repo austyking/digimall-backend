@@ -29,10 +29,10 @@ final class CreateProductVariantRequest extends FormRequest
         return [
             'sku' => ['required', 'string', 'max:255', 'unique:product_variants,sku'],
             'stock' => ['required', 'integer', 'min:0'],
-            'purchasable' => ['sometimes', 'boolean'],
+            'purchasable' => ['sometimes', 'in:always,in_stock,backorder'],
             'price' => ['required', 'numeric', 'min:0'],
             'unit_quantity' => ['sometimes', 'integer', 'min:1'],
-            'tax_class_id' => ['sometimes', 'string', 'exists:tax_classes,id'],
+            'tax_class_id' => ['sometimes', 'integer', 'exists:tax_classes,id'],
             'backorder' => ['sometimes', 'boolean'],
             'values' => ['sometimes', 'array'], // Option values for variant
             'values.*' => ['sometimes', 'string'],

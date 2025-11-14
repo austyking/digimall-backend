@@ -28,6 +28,10 @@ class DatabaseSeeder extends Seeder
             $this->call(VendorSeeder::class);
         }
 
+        if ($this->command->confirm('Do you want to seed sample products?', true)) {
+            $this->call(ProductSeeder::class);
+        }
+
         // User::factory(10)->create();
 
         User::factory()->create([

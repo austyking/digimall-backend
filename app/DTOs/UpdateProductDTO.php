@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\DTOs;
 
+use Lunar\FieldTypes\Text;
+
 /**
  * Data Transfer Object for updating a product.
  *
@@ -68,24 +70,30 @@ final readonly class UpdateProductDTO
             $data['brand_id'] = $this->brandId;
         }
 
-        // Build attribute_data updates
+        // Build attribute_data updates with FieldType objects
         $attributeData = [];
 
         if ($this->name !== null) {
-            $attributeData['name'] = $this->name;
+            $attributeData['name'] = new Text($this->name);
         }
 
         if ($this->description !== null) {
-            $attributeData['description'] = $this->description;
+            $attributeData['description'] = new Text($this->description);
         }
 
         if ($this->sku !== null) {
-            $attributeData['sku'] = $this->sku;
+            $attributeData['sku'] = new Text($this->sku);
         }
 
-        // Merge with provided attribute_data
+        // Merge with provided attribute_data (convert to FieldType objects)
         if ($this->attributeData) {
-            $attributeData = array_merge($attributeData, $this->attributeData);
+            foreach ($this->attributeData as $key => $value) {
+                if (is_string($value)) {
+                    $attributeData[$key] = new Text($value);
+                } else {
+                    $attributeData[$key] = $value;
+                }
+            }
         }
 
         if (! empty($attributeData)) {

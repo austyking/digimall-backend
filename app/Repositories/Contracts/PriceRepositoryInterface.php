@@ -23,7 +23,7 @@ interface PriceRepositoryInterface
     /**
      * Create a price for a priceable (ProductVariant).
      */
-    public function createForPriceable(string $priceableId, string $priceableType, float $amount, ?int $currencyId = null, int $minQuantity = 1): Price;
+    public function createForPriceable(int $priceableId, string $priceableType, float $amount, ?int $currencyId = null, int $minQuantity = 1): Price;
 
     /**
      * Update a price.
@@ -33,10 +33,10 @@ interface PriceRepositoryInterface
     /**
      * Get prices for a priceable.
      */
-    public function getForPriceable(string $priceableId, string $priceableType): Collection;
+    public function getForPriceable(int $priceableId, string $priceableType): Collection;
 
     /**
      * Find price by priceable, currency, and minimum quantity.
      */
-    public function findByPriceableAndCurrency(string $priceableId, string $priceableType, int $currencyId, int $minQuantity = 1): ?Price;
+    public function findByPriceableAndCurrency(int $priceableId, string $priceableType, int $currencyId, int $minQuantity = 1): ?Price;
 }

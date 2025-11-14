@@ -12,12 +12,12 @@ interface ProductVariantRepositoryInterface
     /**
      * Find a variant by ID.
      */
-    public function find(string $id): ?ProductVariant;
+    public function find(int $id): ?ProductVariant;
 
     /**
      * Get all variants for a product.
      */
-    public function getByProduct(string $productId): Collection;
+    public function getByProduct(int $productId): Collection;
 
     /**
      * Create a new variant.
@@ -27,12 +27,12 @@ interface ProductVariantRepositoryInterface
     /**
      * Update a variant.
      */
-    public function update(string $id, array $data): ProductVariant;
+    public function update(int $id, array $data): ProductVariant;
 
     /**
      * Delete a variant.
      */
-    public function delete(string $id): bool;
+    public function delete(int $id): bool;
 
     /**
      * Find variant by SKU.

@@ -44,7 +44,7 @@ final readonly class ProductFilterDTO
             minPrice: isset($data['min_price']) ? (float) $data['min_price'] : null,
             maxPrice: isset($data['max_price']) ? (float) $data['max_price'] : null,
             inStock: isset($data['in_stock']) ? (bool) $data['in_stock'] : null,
-            limit: isset($data['limit']) ? (int) $data['limit'] : null,
+            limit: isset($data['limit']) ? (int) $data['limit'] : (isset($data['per_page']) ? (int) $data['per_page'] : null),
             offset: isset($data['offset']) ? (int) $data['offset'] : null,
             sortBy: $data['sort_by'] ?? null,
             sortDirection: in_array(strtolower($data['sort_direction'] ?? ''), ['asc', 'desc'])

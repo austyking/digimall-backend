@@ -4,8 +4,10 @@ declare(strict_types=1);
 
 namespace App\Http\Controllers\Api\V1\Product;
 
+use App\DTOs\UpdateProductInventoryDTO;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\UpdateProductInventoryRequest;
+use App\Http\Resources\ProductInventoryResource;
 use App\Services\ProductService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -25,7 +27,7 @@ final class ProductInventoryController extends Controller
      *
      * API v1 alternative to: lunar/products/{record}/inventory
      */
-    public function show(string $productId): JsonResponse
+    public function show(int $productId): ProductInventoryResource
     {
         $product = $this->productService->findById($productId);
 
@@ -36,29 +38,29 @@ final class ProductInventoryController extends Controller
         $availableQuantity = $this->productService->getAvailableQuantity($productId);
         $lowStockThreshold = config('lunar.products.low_stock_threshold', 10);
 
-        return response()->json([
-            'data' => [
-                'product_id' => $productId,
-                'total_stock' => $availableQuantity,
-                'low_stock_threshold' => $lowStockThreshold,
-                'is_low_stock' => $availableQuantity <= $lowStockThreshold,
-                'variants' => $product->variants->map(function ($variant) {
-                    return [
-                        'id' => $variant->id,
-                        'sku' => $variant->sku,
-                        'stock' => $variant->stock,
-                        'purchasable' => $variant->purchasable,
-                        'backorder' => $variant->backorder ?? 0,
-                    ];
-                }),
-            ],
-        ]);
+        $inventoryData = [
+            'product_id' => $productId,
+            'total_stock' => $availableQuantity,
+            'low_stock_threshold' => $lowStockThreshold,
+            'is_low_stock' => $availableQuantity <= $lowStockThreshold,
+            'variants' => $product->variants->map(function ($variant) {
+                return [
+                    'id' => $variant->id,
+                    'sku' => $variant->sku,
+                    'stock' => $variant->stock,
+                    'purchasable' => $variant->purchasable,
+                    'backorder' => $variant->backorder ?? 0,
+                ];
+            }),
+        ];
+
+        return new ProductInventoryResource($inventoryData);
     }
 
     /**
      * Update product inventory.
      */
-    public function update(UpdateProductInventoryRequest $request, string $productId): JsonResponse
+    public function update(UpdateProductInventoryRequest $request, int $productId): JsonResponse
     {
         $user = $request->user();
         $vendor = $user->vendor;
@@ -78,21 +80,43 @@ final class ProductInventoryController extends Controller
         }
 
         $validated = $request->validated();
+        $dto = UpdateProductInventoryDTO::fromRequest($validated);
 
-        $operation = $validated['operation'] ?? 'set';
-        $currentStock = $this->productService->getAvailableQuantity($productId);
+        $variantId = $dto->variantId;
+        $action = $dto->action;
+        $quantity = $dto->quantity;
 
-        $newStock = match ($operation) {
-            'increment' => $currentStock + $validated['stock'],
-            'decrement' => max(0, $currentStock - $validated['stock']),
-            default => $validated['stock'],
+        // Check if variant exists and belongs to the product
+        $variant = $product->variants()->find($variantId);
+        if (! $variant) {
+            abort(404, 'Variant not found for this product');
+        }
+
+        $currentStock = $variant->stock;
+
+        // Validate decrement operation
+        if ($action === 'decrement' && $quantity > $currentStock) {
+            return response()->json([
+                'message' => 'Cannot decrement stock below zero',
+                'errors' => [
+                    'quantity' => ['Cannot decrement stock below zero'],
+                ],
+            ], 422);
+        }
+
+        $newStock = match ($action) {
+            'set' => $quantity,
+            'increment' => $currentStock + $quantity,
+            'decrement' => $currentStock - $quantity,
         };
 
-        $this->productService->updateStock($productId, $newStock);
+        $variant->stock = $newStock;
+        $variant->save();
 
         return response()->json([
             'message' => 'Product inventory updated successfully',
             'data' => [
+                'variant_id' => $variantId,
                 'previous_stock' => $currentStock,
                 'new_stock' => $newStock,
             ],

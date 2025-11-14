@@ -4,84 +4,75 @@ declare(strict_types=1);
 
 namespace App\Services;
 
+use App\DTOs\CreateProductUrlDTO;
+use App\DTOs\UpdateProductUrlDTO;
 use App\Repositories\Contracts\LanguageRepositoryInterface;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Repositories\Contracts\UrlRepositoryInterface;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use Lunar\Models\Product;
 use Lunar\Models\Url;
 
 final readonly class ProductUrlService
 {
     public function __construct(
-        private ProductRepositoryInterface $productRepository,
         private UrlRepositoryInterface $urlRepository,
-        private LanguageRepositoryInterface $languageRepository
     ) {}
 
     /**
      * Get all URLs for a product.
      */
-    public function getProductUrls(string $productId): Collection
+    public function getUrlsForProduct(int $productId): Collection
     {
-        return $this->urlRepository->getByElement(Product::class, $productId);
+        return $this->urlRepository->findByElement($productId, Product::class);
     }
 
     /**
      * Get default URL for a product and language.
      */
-    public function getDefaultUrl(string $productId, string $languageCode): ?Url
+    public function getDefaultUrl(int $productId, int $languageId): ?Url
     {
-        $language = $this->languageRepository->findByCode($languageCode);
-
-        if (! $language) {
-            return null;
-        }
-
-        return $this->urlRepository->getDefaultForElement(Product::class, $productId, $language->id);
+        return $this->urlRepository->getDefaultUrl($productId, Product::class, $languageId);
     }
 
     /**
      * Create a new URL for a product.
      */
-    public function createUrl(string $productId, array $data): Url
+    public function createUrl(int $productId, CreateProductUrlDTO $dto): Url
     {
-        $product = $this->productRepository->find($productId);
-
-        if (! $product) {
-            throw new ModelNotFoundException('Product not found');
-        }
-
         // Check if slug exists
-        if ($this->urlRepository->slugExists($data['slug'], $data['language_id'])) {
+        if ($this->urlRepository->slugExists($dto->slug, $dto->languageId)) {
             throw new \InvalidArgumentException('Slug already exists for this language');
         }
 
         // If this is set as default, unset other defaults
-        if ($data['default'] ?? false) {
-            $this->unsetDefaultUrls($productId, $data['language_id']);
+        if ($dto->default) {
+            $this->unsetDefaultUrls($productId, $dto->languageId);
         }
 
         return $this->urlRepository->create([
             'element_type' => Product::class,
             'element_id' => $productId,
-            'slug' => $data['slug'],
-            'language_id' => $data['language_id'],
-            'default' => $data['default'] ?? false,
+            'slug' => $dto->slug,
+            'language_id' => $dto->languageId,
+            'default' => $dto->default,
         ]);
     }
 
     /**
      * Update a URL.
      */
-    public function updateUrl(int $urlId, array $data): Url
+    public function updateUrl(int $urlId, UpdateProductUrlDTO $dto): Url
     {
         $url = $this->urlRepository->find($urlId);
 
         if (! $url) {
             throw new ModelNotFoundException('URL not found');
         }
+
+        $data = $dto->toArray();
 
         // Check if slug exists (excluding current URL)
         if (isset($data['slug']) && $this->urlRepository->slugExists($data['slug'], $url->language_id, $urlId)) {
@@ -111,14 +102,12 @@ final readonly class ProductUrlService
         $elementId = $url->element_id;
         $languageId = $url->language_id;
 
-        $deleted = $this->urlRepository->delete($urlId);
-
-        // If the deleted URL was default, promote another URL
-        if ($deleted && $wasDefault) {
-            $this->promoteNextUrlToDefault($elementId, $languageId);
+        // If the URL was default, promote another URL BEFORE deleting
+        if ($wasDefault) {
+            $this->promoteNextUrlToDefault($urlId, $elementId, $languageId);
         }
 
-        return $deleted;
+        return $this->urlRepository->delete($urlId);
     }
 
     /**
@@ -126,7 +115,19 @@ final readonly class ProductUrlService
      */
     public function setAsDefault(int $urlId): Url
     {
-        return $this->urlRepository->setAsDefault($urlId);
+        $url = $this->urlRepository->find($urlId);
+
+        if (! $url) {
+            throw new ModelNotFoundException('URL not found');
+        }
+
+        // Unset other defaults for this element and language
+        $this->unsetDefaultUrls($url->element_id, $url->language_id);
+
+        // Set this URL as default
+        $this->urlRepository->update($urlId, ['default' => true]);
+        $url->refresh ();
+        return $url;
     }
 
     /**
@@ -134,18 +135,35 @@ final readonly class ProductUrlService
      */
     public function generateSlug(string $name, int $languageId): string
     {
-        return $this->urlRepository->generateUniqueSlug($name, $languageId);
+        $slug = Str::slug($name);
+        $originalSlug = $slug;
+        $counter = 1;
+
+        while ($this->urlRepository->slugExists($slug, $languageId)) {
+            $slug = $originalSlug.'-'.$counter;
+            $counter++;
+        }
+
+        return $slug;
+    }
+
+    /**
+     * Check if a slug is unique for a language.
+     */
+    public function isSlugUnique(string $slug, int $languageId, ?int $excludeId = null): bool
+    {
+        return ! $this->urlRepository->slugExists($slug, $languageId, $excludeId);
     }
 
     /**
      * Unset all default URLs for a product and language.
      */
-    private function unsetDefaultUrls(string $productId, int $languageId): void
+    private function unsetDefaultUrls(int $productId, int $languageId): void
     {
-        $urls = $this->urlRepository->getByElement(Product::class, $productId);
+        $urls = $this->urlRepository->findByElementAndLanguage($productId, Product::class, $languageId);
 
         foreach ($urls as $url) {
-            if ($url->language_id === $languageId && $url->default) {
+            if ($url->default) {
                 $this->urlRepository->update($url->id, ['default' => false]);
             }
         }
@@ -154,11 +172,12 @@ final readonly class ProductUrlService
     /**
      * Promote the next URL to default after deletion.
      */
-    private function promoteNextUrlToDefault(string $elementId, int $languageId): void
+    private function promoteNextUrlToDefault(int $urlIdToDelete, int $elementId, int $languageId): void
     {
-        $urls = $this->urlRepository->getByElement(Product::class, $elementId);
+        $urls = $this->urlRepository->findByElementAndLanguage($elementId, Product::class, $languageId);
 
-        $nextUrl = $urls->first(fn ($url) => $url->language_id === $languageId);
+        // Find the next URL (excluding the one being deleted)
+        $nextUrl = $urls->first(fn ($url) => $url->id !== $urlIdToDelete);
 
         if ($nextUrl) {
             $this->urlRepository->update($nextUrl->id, ['default' => true]);

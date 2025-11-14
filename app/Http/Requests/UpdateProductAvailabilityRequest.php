@@ -27,8 +27,9 @@ final class UpdateProductAvailabilityRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'status' => ['sometimes', 'string', 'in:draft,published,archived'],
+            'purchasable' => ['sometimes', 'string', 'in:always,in_stock,backorder'],
             'stock' => ['sometimes', 'integer', 'min:0'],
+            'backorder' => ['sometimes', 'integer', 'min:0'],
         ];
     }
 
@@ -40,9 +41,11 @@ final class UpdateProductAvailabilityRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'status.in' => 'Status must be one of: draft, published, archived.',
+            'purchasable.in' => 'Purchasable must be one of: always, in_stock, backorder.',
             'stock.integer' => 'Stock must be a whole number.',
             'stock.min' => 'Stock cannot be negative.',
+            'backorder.integer' => 'Backorder must be a whole number.',
+            'backorder.min' => 'Backorder cannot be negative.',
         ];
     }
 }

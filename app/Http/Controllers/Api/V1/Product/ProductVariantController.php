@@ -30,7 +30,7 @@ final class ProductVariantController extends Controller
      *
      * API v1 alternative to: lunar/products/{record}/variants
      */
-    public function index(string $productId): AnonymousResourceCollection
+    public function index(int $productId): AnonymousResourceCollection
     {
         $product = $this->productService->findById($productId);
 
@@ -46,7 +46,7 @@ final class ProductVariantController extends Controller
     /**
      * Create a new variant for a product.
      */
-    public function store(CreateProductVariantRequest $request, string $productId): JsonResponse
+    public function store(CreateProductVariantRequest $request, int $productId): JsonResponse
     {
         $user = $request->user();
         $vendor = $user->vendor;
@@ -76,7 +76,7 @@ final class ProductVariantController extends Controller
     /**
      * Update a product variant.
      */
-    public function update(UpdateProductVariantRequest $request, string $productId, string $variantId): JsonResponse
+    public function update(UpdateProductVariantRequest $request, int $productId, int $variantId): JsonResponse
     {
         $user = $request->user();
         $vendor = $user->vendor;
@@ -106,7 +106,7 @@ final class ProductVariantController extends Controller
     /**
      * Delete a product variant.
      */
-    public function destroy(Request $request, string $productId, string $variantId): JsonResponse
+    public function destroy(Request $request, int $productId, int $variantId): JsonResponse
     {
         $user = $request->user();
         $vendor = $user->vendor;
@@ -128,7 +128,7 @@ final class ProductVariantController extends Controller
         $this->productService->deleteVariant($productId, $variantId);
 
         return response()->json([
-            'message' => 'Product variant deleted successfully',
+            'message' => 'Variant deleted successfully',
         ]);
     }
 }

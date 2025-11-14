@@ -18,6 +18,7 @@ final readonly class CreateProductVariantDTO
         public ?int $taxClassId = null,
         public ?int $backorder = 0,
         public ?array $values = null,
+        public ?int $currencyId = null,
     ) {}
 
     /**
@@ -35,6 +36,7 @@ final readonly class CreateProductVariantDTO
             'backorder' => 'nullable|integer|min:0',
             'values' => 'nullable|array',
             'values.*' => 'integer|exists:product_option_values,id',
+            'currency_id' => 'nullable|integer|exists:currencies,id',
         ]);
 
         if ($validator->fails()) {
@@ -52,6 +54,7 @@ final readonly class CreateProductVariantDTO
             taxClassId: $validated['tax_class_id'] ?? null,
             backorder: $validated['backorder'] ?? 0,
             values: $validated['values'] ?? null,
+            currencyId: $validated['currency_id'] ?? null,
         );
     }
 
@@ -69,6 +72,7 @@ final readonly class CreateProductVariantDTO
             'tax_class_id' => $this->taxClassId,
             'backorder' => $this->backorder,
             'values' => $this->values,
+            'currency_id' => $this->currencyId,
         ];
     }
 }

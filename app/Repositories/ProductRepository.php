@@ -14,7 +14,7 @@ final class ProductRepository implements ProductRepositoryInterface
     /**
      * Find a product by ID.
      */
-    public function find(string $id): ?Product
+    public function find(int $id): ?Product
     {
         return Product::query()->find($id);
     }
@@ -34,9 +34,9 @@ final class ProductRepository implements ProductRepositoryInterface
     /**
      * Get all products.
      */
-    public function all(): Collection
+    public function all(int $perPage = 15): Collection
     {
-        return Product::query()->get();
+        return Product::query()->limit($perPage)->get();
     }
 
     /**
@@ -73,8 +73,8 @@ final class ProductRepository implements ProductRepositoryInterface
     public function search(string $query): Collection
     {
         return Product::query()
-            ->where('name', 'like', "%{$query}%")
-            ->orWhere('description', 'like', "%{$query}%")
+            ->where('attribute_data->name->value', 'like', "%{$query}%")
+            ->orWhere('attribute_data->description->value', 'like', "%{$query}%")
             ->get();
     }
 
@@ -88,9 +88,9 @@ final class ProductRepository implements ProductRepositoryInterface
         // Text search
         if (! empty($filters['query'])) {
             $query->where(function ($q) use ($filters): void {
-                $q->where('attribute_data->name', 'like', '%'.$filters['query'].'%')
-                    ->orWhere('attribute_data->description', 'like', '%'.$filters['query'].'%')
-                    ->orWhere('attribute_data->short_description', 'like', '%'.$filters['query'].'%');
+                $q->where('attribute_data->name->value', 'like', '%'.$filters['query'].'%')
+                    ->orWhere('attribute_data->description->value', 'like', '%'.$filters['query'].'%')
+                    ->orWhere('attribute_data->short_description->value', 'like', '%'.$filters['query'].'%');
             });
         }
 
@@ -199,7 +199,7 @@ final class ProductRepository implements ProductRepositoryInterface
     /**
      * Get products by collection ID.
      */
-    public function getByCollection(string $collectionId): Collection
+    public function getByCollection(int $collectionId): Collection
     {
         return Product::query()
             ->whereHas('collections', function ($query) use ($collectionId): void {
@@ -209,12 +209,69 @@ final class ProductRepository implements ProductRepositoryInterface
     }
 
     /**
+     * Find products by collection (alias).
+     */
+    public function findByCollection(int $collectionId): Collection
+    {
+        return $this->getByCollection($collectionId);
+    }
+
+    /**
      * Get products by brand ID.
      */
-    public function getByBrand(string $brandId): Collection
+    public function getByBrand(int $brandId): Collection
     {
         return Product::query()
             ->where('brand_id', $brandId)
+            ->get();
+    }
+
+    /**
+     * Find products by brand (alias).
+     */
+    public function findByBrand(int $brandId): Collection
+    {
+        return $this->getByBrand($brandId);
+    }
+
+    /**
+     * Find products by status.
+     */
+    public function findByStatus(string $status): Collection
+    {
+        return Product::query()
+            ->where('status', $status)
+            ->get();
+    }
+
+    /**
+     * Find products by tags.
+     */
+    public function findByTags(array $tags): Collection
+    {
+        // Check if tags relationship exists on Product model
+        $product = new Product;
+        if (! method_exists($product, 'tags')) {
+            // Return empty collection if tags relationship doesn't exist
+            return collect();
+        }
+
+        return Product::query()
+            ->whereHas('tags', function ($query) use ($tags): void {
+                $query->whereIn('tag_id', $tags);
+            })
+            ->get();
+    }
+
+    /**
+     * Find products by price range.
+     */
+    public function findByPriceRange(int $minPrice, int $maxPrice): Collection
+    {
+        return Product::query()
+            ->whereHas('prices', function ($priceQuery) use ($minPrice, $maxPrice): void {
+                $priceQuery->whereBetween('price', [$minPrice, $maxPrice]);
+            })
             ->get();
     }
 
@@ -241,7 +298,7 @@ final class ProductRepository implements ProductRepositoryInterface
     /**
      * Update a product.
      */
-    public function update(string $id, array $data): Product
+    public function update(int $id, array $data): Product
     {
         $product = $this->find($id);
 
@@ -257,7 +314,7 @@ final class ProductRepository implements ProductRepositoryInterface
     /**
      * Delete a product.
      */
-    public function delete(string $id): bool
+    public function delete(int $id): bool
     {
         $product = $this->find($id);
 
@@ -271,7 +328,7 @@ final class ProductRepository implements ProductRepositoryInterface
     /**
      * Get product with relationships loaded.
      */
-    public function findWithRelations(string $id, array $relations = []): ?Product
+    public function findWithRelations(int $id, array $relations = []): ?Product
     {
         return Product::query()
             ->with($relations)
@@ -281,7 +338,7 @@ final class ProductRepository implements ProductRepositoryInterface
     /**
      * Check if product exists by ID.
      */
-    public function exists(string $id): bool
+    public function exists(int $id): bool
     {
         return Product::query()->where('id', $id)->exists();
     }
@@ -307,9 +364,17 @@ final class ProductRepository implements ProductRepositoryInterface
     }
 
     /**
+     * Get low stock products (alias).
+     */
+    public function getLowStockProducts(int $threshold = 10): Collection
+    {
+        return $this->getLowStock($threshold);
+    }
+
+    /**
      * Update product stock.
      */
-    public function updateStock(string $id, int $quantity): bool
+    public function updateStock(int $id, int $quantity): bool
     {
         $product = $this->find($id);
 
@@ -329,7 +394,7 @@ final class ProductRepository implements ProductRepositoryInterface
         return $variant->save();
     }
 
-    public function isAvailable(string $id): bool
+    public function isAvailable(int $id): bool
     {
         $product = $this->find($id);
 
@@ -347,7 +412,7 @@ final class ProductRepository implements ProductRepositoryInterface
         return $variant->stock > 0;
     }
 
-    public function getAvailableQuantity(string $id): int
+    public function getAvailableQuantity(int $id): int
     {
         $product = $this->find($id);
 
@@ -355,13 +420,17 @@ final class ProductRepository implements ProductRepositoryInterface
             return 0;
         }
 
-        // Get the default variant's stock
-        $variant = $product->variants()->first();
+        // Sum stock from all variants
+        return $product->variants->sum('stock');
+    }
 
-        if ($variant === null) {
-            return 0;
-        }
-
-        return $variant->stock;
+    /**
+     * Count products by vendor.
+     */
+    public function countByVendor(string $vendorId): int
+    {
+        return Product::query()
+            ->where('vendor_id', $vendorId)
+            ->count();
     }
 }

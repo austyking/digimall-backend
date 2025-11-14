@@ -15,14 +15,24 @@ interface UrlRepositoryInterface
     public function find(int $id): ?Url;
 
     /**
-     * Get all URLs for an element (Product).
+     * Get all URLs for an element (Product) by element ID and type.
      */
-    public function getByElement(string $elementType, string $elementId): Collection;
+    public function findByElement(int $elementId, string $elementType): Collection;
+
+    /**
+     * Get URLs for an element and language.
+     */
+    public function findByElementAndLanguage(int $elementId, string $elementType, int $languageId): Collection;
 
     /**
      * Get default URL for an element and language.
      */
-    public function getDefaultForElement(string $elementType, string $elementId, int $languageId): ?Url;
+    public function getDefaultForElement(string $elementType, int $elementId, int $languageId): ?Url;
+
+    /**
+     * Get default URL by element ID and language ID - for test compatibility.
+     */
+    public function getDefaultUrl(int $elementId, string $elementType, int $languageId): ?Url;
 
     /**
      * Create a new URL.

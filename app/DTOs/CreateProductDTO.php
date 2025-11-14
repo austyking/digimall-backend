@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace App\DTOs;
 
+use Lunar\FieldTypes\Text;
+
 /**
  * Data Transfer Object for creating a new product.
  *
@@ -70,20 +72,23 @@ final readonly class CreateProductDTO
 
         // Build attribute_data for Lunar
         $attributeData = [
-            'name' => $this->name,
+            'name' => new Text($this->name),
         ];
 
         if ($this->description) {
-            $attributeData['description'] = $this->description;
+            $attributeData['description'] = new Text($this->description);
         }
 
         if ($this->sku) {
-            $attributeData['sku'] = $this->sku;
+            $attributeData['sku'] = new Text($this->sku);
         }
 
         // Merge with provided attribute_data
         if ($this->attributeData) {
-            $attributeData = array_merge($attributeData, $this->attributeData);
+            $attributeData = array_merge($attributeData, array_map(
+                fn ($value) => is_string($value) ? new Text($value) : $value,
+                $this->attributeData
+            ));
         }
 
         $data['attribute_data'] = $attributeData;

@@ -13,7 +13,7 @@ final class ProductVariantRepository implements ProductVariantRepositoryInterfac
     /**
      * Find a variant by ID.
      */
-    public function find(string $id): ?ProductVariant
+    public function find(int $id): ?ProductVariant
     {
         return ProductVariant::query()->find($id);
     }
@@ -21,7 +21,7 @@ final class ProductVariantRepository implements ProductVariantRepositoryInterfac
     /**
      * Get all variants for a product.
      */
-    public function getByProduct(string $productId): Collection
+    public function getByProduct(int $productId): Collection
     {
         return ProductVariant::query()
             ->where('product_id', $productId)
@@ -40,7 +40,7 @@ final class ProductVariantRepository implements ProductVariantRepositoryInterfac
     /**
      * Update a variant.
      */
-    public function update(string $id, array $data): ProductVariant
+    public function update(int $id, array $data): ProductVariant
     {
         $variant = $this->find($id);
 
@@ -56,7 +56,7 @@ final class ProductVariantRepository implements ProductVariantRepositoryInterfac
     /**
      * Delete a variant.
      */
-    public function delete(string $id): bool
+    public function delete(int $id): bool
     {
         $variant = $this->find($id);
 

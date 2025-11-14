@@ -12,7 +12,7 @@ interface ProductCollectionRepositoryInterface
     /**
      * Find a collection by ID.
      */
-    public function find(string $id): ?LunarCollection;
+    public function find(int $id): ?LunarCollection;
 
     /**
      * Get all collections.
@@ -22,15 +22,15 @@ interface ProductCollectionRepositoryInterface
     /**
      * Attach products to a collection.
      */
-    public function attachProducts(string $collectionId, array $productIds, ?int $startPosition = null): void;
+    public function attachProducts(int $collectionId, array $productIds, ?int $startPosition = null): void;
 
     /**
      * Detach products from a collection.
      */
-    public function detachProducts(string $collectionId, array $productIds): void;
+    public function detachProducts(int $collectionId, array $productIds): void;
 
     /**
      * Get products in a collection.
      */
-    public function getProducts(string $collectionId): Collection;
+    public function getProducts(int $collectionId): Collection;
 }

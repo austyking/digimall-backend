@@ -27,8 +27,9 @@ final class UpdateProductInventoryRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'stock' => ['required', 'integer', 'min:0'],
-            'operation' => ['sometimes', 'string', 'in:set,increment,decrement'],
+            'variant_id' => ['required', 'integer'],
+            'action' => ['required', 'string', 'in:set,increment,decrement'],
+            'quantity' => ['required', 'integer', 'min:0'],
         ];
     }
 
@@ -40,10 +41,13 @@ final class UpdateProductInventoryRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'stock.required' => 'Stock amount is required.',
-            'stock.integer' => 'Stock must be a whole number.',
-            'stock.min' => 'Stock cannot be negative.',
-            'operation.in' => 'Operation must be one of: set, increment, decrement.',
+            'variant_id.required' => 'Variant ID is required.',
+            'variant_id.integer' => 'Variant ID must be an integer.',
+            'action.required' => 'Action is required.',
+            'action.in' => 'Action must be one of: set, increment, decrement.',
+            'quantity.required' => 'Quantity is required.',
+            'quantity.integer' => 'Quantity must be an integer.',
+            'quantity.min' => 'Quantity cannot be negative.',
         ];
     }
 }

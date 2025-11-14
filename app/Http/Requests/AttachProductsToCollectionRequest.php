@@ -27,8 +27,9 @@ final class AttachProductsToCollectionRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'collection_id' => ['required', 'integer', 'exists:collections,id'],
             'product_ids' => ['required', 'array', 'min:1'],
-            'product_ids.*' => ['required', 'string', 'exists:products,id'],
+            'product_ids.*' => ['required', 'integer', 'exists:products,id'],
         ];
     }
 
@@ -40,11 +41,14 @@ final class AttachProductsToCollectionRequest extends FormRequest
     public function messages(): array
     {
         return [
+            'collection_id.required' => 'Collection ID is required.',
+            'collection_id.integer' => 'Collection ID must be an integer.',
+            'collection_id.exists' => 'The specified collection does not exist.',
             'product_ids.required' => 'At least one product ID is required.',
             'product_ids.array' => 'Product IDs must be an array.',
             'product_ids.min' => 'At least one product ID is required.',
             'product_ids.*.required' => 'Each product ID is required.',
-            'product_ids.*.string' => 'Each product ID must be a string.',
+            'product_ids.*.integer' => 'Each product ID must be an integer.',
             'product_ids.*.exists' => 'One or more product IDs are invalid.',
         ];
     }

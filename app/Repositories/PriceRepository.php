@@ -30,16 +30,19 @@ final class PriceRepository implements PriceRepositoryInterface
     /**
      * Create a price for a priceable (ProductVariant).
      */
-    public function createForPriceable(string $priceableId, string $priceableType, float $amount, ?int $currencyId = null, int $minQuantity = 1): Price
+    public function createForPriceable(int $priceableId, string $priceableType, float $amount, ?int $currencyId = null, int $minQuantity = 1): Price
     {
         if ($currencyId === null) {
             $currency = $this->getDefaultCurrency();
             $currencyId = $currency?->id;
         }
 
-        return Price::query()->create([
-            'priceable_id' => $priceableId,
-            'priceable_type' => $priceableType,
+        // Resolve the priceable model instance
+        /** @var \Illuminate\Database\Eloquent\Model $priceable */
+        $priceable = $priceableType::query()->findOrFail($priceableId);
+
+        // Use the prices() relationship to create the price
+        return $priceable->prices()->create([
             'currency_id' => $currencyId,
             'price' => (int) ($amount * 100), // Convert to cents
             'min_quantity' => $minQuantity,
@@ -70,7 +73,7 @@ final class PriceRepository implements PriceRepositoryInterface
     /**
      * Get prices for a priceable.
      */
-    public function getForPriceable(string $priceableId, string $priceableType): Collection
+    public function getForPriceable(int $priceableId, string $priceableType): Collection
     {
         return Price::query()
             ->where('priceable_id', $priceableId)
@@ -82,7 +85,7 @@ final class PriceRepository implements PriceRepositoryInterface
     /**
      * Find price by priceable, currency, and minimum quantity.
      */
-    public function findByPriceableAndCurrency(string $priceableId, string $priceableType, int $currencyId, int $minQuantity = 1): ?Price
+    public function findByPriceableAndCurrency(int $priceableId, string $priceableType, int $currencyId, int $minQuantity = 1): ?Price
     {
         return Price::query()
             ->where('priceable_id', $priceableId)

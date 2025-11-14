@@ -7,14 +7,14 @@ namespace App\DTOs;
 final readonly class AttachProductsToCollectionDTO
 {
     public function __construct(
-        public string $collectionId,
+        public int $collectionId,
         public array $productIds,
     ) {}
 
     /**
      * Create DTO from request data.
      */
-    public static function fromRequest(string $collectionId, array $data): self
+    public static function fromRequest(int $collectionId, array $data): self
     {
         return new self(
             collectionId: $collectionId,

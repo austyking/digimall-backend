@@ -100,7 +100,7 @@ Route::prefix('v1')->middleware([InitializeTenancyByDomain::class])->group(funct
 
             // Product collections
             Route::prefix('/{productId}/collections')->group(function (): void {
-                Route::get('/', [ProductCollectionController::class, 'index'])
+                Route::get('/', [ProductCollectionController::class, 'collections'])
                     ->name('products.collections.index');
                 Route::post('/attach', [ProductCollectionController::class, 'attach'])
                     ->name('products.collections.attach');

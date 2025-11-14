@@ -14,8 +14,9 @@ use App\Repositories\Contracts\PriceRepositoryInterface;
 use App\Repositories\Contracts\ProductCollectionRepositoryInterface;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Repositories\Contracts\ProductVariantRepositoryInterface;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
-use Illuminate\Support\Collection;
 use Lunar\Models\ProductVariant;
 
 final readonly class ProductService
@@ -30,7 +31,7 @@ final readonly class ProductService
     /**
      * Find a product by ID.
      */
-    public function findById(string $id): ?Product
+    public function findById(int $id): ?Product
     {
         return $this->productRepository->find($id);
     }
@@ -41,6 +42,14 @@ final readonly class ProductService
     public function getAllProducts(?int $limit = null): Collection
     {
         return $this->productRepository->all($limit);
+    }
+
+    /**
+     * Get paginated products for a tenant.
+     */
+    public function getPaginatedProducts(int $perPage = 15): LengthAwarePaginator
+    {
+        return $this->productRepository->paginate($perPage);
     }
 
     /**
@@ -70,7 +79,7 @@ final readonly class ProductService
     /**
      * Get products by collection.
      */
-    public function getByCollection(string $collectionId, ?int $limit = null): Collection
+    public function getByCollection(int $collectionId, ?int $limit = null): Collection
     {
         return $this->productRepository->getByCollection($collectionId, $limit);
     }
@@ -78,7 +87,7 @@ final readonly class ProductService
     /**
      * Get products by brand.
      */
-    public function getByBrand(string $brandId, ?int $limit = null): Collection
+    public function getByBrand(int $brandId, ?int $limit = null): Collection
     {
         return $this->productRepository->getByBrand($brandId, $limit);
     }
@@ -110,7 +119,7 @@ final readonly class ProductService
     /**
      * Update product stock.
      */
-    public function updateStock(string $productId, int $quantity): bool
+    public function updateStock(int $productId, int $quantity): bool
     {
         return $this->productRepository->updateStock($productId, $quantity);
     }
@@ -118,7 +127,7 @@ final readonly class ProductService
     /**
      * Check if product is available.
      */
-    public function isAvailable(string $productId): bool
+    public function isAvailable(int $productId): bool
     {
         return $this->productRepository->isAvailable($productId);
     }
@@ -126,7 +135,7 @@ final readonly class ProductService
     /**
      * Get available quantity for a product.
      */
-    public function getAvailableQuantity(string $productId): int
+    public function getAvailableQuantity(int $productId): int
     {
         return $this->productRepository->getAvailableQuantity($productId);
     }
@@ -150,7 +159,7 @@ final readonly class ProductService
     /**
      * Update an existing product.
      */
-    public function updateProduct(string $productId, UpdateProductDTO $dto): Product
+    public function updateProduct(int $productId, UpdateProductDTO $dto): Product
     {
         $product = $this->findById($productId);
 
@@ -164,7 +173,7 @@ final readonly class ProductService
     /**
      * Delete a product.
      */
-    public function deleteProduct(string $productId): bool
+    public function deleteProduct(int $productId): bool
     {
         $product = $this->findById($productId);
 
@@ -189,7 +198,7 @@ final readonly class ProductService
     /**
      * Detach products from a collection.
      */
-    public function detachFromCollection(string $collectionId, array $productIds): void
+    public function detachFromCollection(int $collectionId, array $productIds): void
     {
         $this->collectionRepository->detachProducts($collectionId, $productIds);
     }
@@ -197,7 +206,7 @@ final readonly class ProductService
     /**
      * Update product status.
      */
-    public function updateStatus(string $productId, string $status): bool
+    public function updateStatus(int $productId, string $status): bool
     {
         $product = $this->findById($productId);
 
@@ -213,46 +222,61 @@ final readonly class ProductService
     /**
      * Create a new product variant.
      */
-    public function createVariant(string $productId, CreateProductVariantDTO $dto): ProductVariant
+    public function createVariant(int $productId, CreateProductVariantDTO $dto): ProductVariant
     {
-        $product = $this->findById($productId);
+        return \DB::transaction(function () use ($productId, $dto) {
+            $product = $this->findById($productId);
+            if (! $product) {
+                throw new ModelNotFoundException('Product not found');
+            }
 
-        if (! $product) {
-            throw new ModelNotFoundException('Product not found');
-        }
+            // Create the variant
+            $variant = $this->variantRepository->create([
+                'product_id' => $productId,
+                'sku' => $dto->sku,
+                'stock' => $dto->stock,
+                'purchasable' => $dto->purchasable,
+                'unit_quantity' => $dto->unitQuantity,
+                'tax_class_id' => $dto->taxClassId,
+                'backorder' => $dto->backorder,
+            ]);
 
-        // Create the variant
-        $variant = $this->variantRepository->create([
-            'product_id' => $productId,
-            'sku' => $dto->sku,
-            'stock' => $dto->stock,
-            'purchasable' => $dto->purchasable,
-            'unit_quantity' => $dto->unitQuantity,
-            'tax_class_id' => $dto->taxClassId,
-            'backorder' => $dto->backorder,
-        ]);
+            // Create price for variant
+            if ($dto->price !== null) {
+                $currencyId = $dto->currencyId;
+                if (empty($currencyId)) {
+                    $defaultCurrency = $this->priceRepository->getDefaultCurrency();
+                    $currencyId = $defaultCurrency?->id;
+                }
 
-        // Create price for variant
-        if ($dto->price !== null) {
-            $this->priceRepository->createForPriceable(
-                $variant->id,
-                ProductVariant::class,
-                $dto->price
-            );
-        }
+                if (empty($currencyId)) {
+                    abort(400, 'A currency is required to create a price for variant');
+                }
+                $variant->prices()->create([
+                    'price' => $dto->price,
+                    'currency_id' => $currencyId,
+                ]);
+                $this->priceRepository->createForPriceable(
+                    $variant->id,
+                    ProductVariant::class,
+                    $dto->price,
+                    $currencyId
+                );
+            }
 
-        // Attach option values if provided
-        if ($dto->values !== null && ! empty($dto->values)) {
-            $variant->values()->sync($dto->values);
-        }
+            // Attach option values if provided
+            if (! empty($dto->values)) {
+                $variant->values()->sync($dto->values);
+            }
 
-        return $variant->fresh(['prices.currency', 'values.option']);
+            return $variant->fresh(['prices.currency', 'values.option']);
+        });
     }
 
     /**
      * Update a product variant.
      */
-    public function updateVariant(string $productId, string $variantId, UpdateProductVariantDTO $dto): ProductVariant
+    public function updateVariant(int $productId, int $variantId, UpdateProductVariantDTO $dto): ProductVariant
     {
         $product = $this->findById($productId);
 
@@ -318,7 +342,7 @@ final readonly class ProductService
     /**
      * Delete a product variant.
      */
-    public function deleteVariant(string $productId, string $variantId): bool
+    public function deleteVariant(int $productId, int $variantId): bool
     {
         $product = $this->findById($productId);
 
@@ -333,5 +357,58 @@ final readonly class ProductService
         }
 
         return $this->variantRepository->delete($variantId);
+    }
+
+    /**
+     * Get aggregated availability data for a product.
+     */
+    public function getAvailabilityData(int $productId): array
+    {
+        $product = $this->findById($productId);
+
+        if (! $product) {
+            return [
+                'is_available' => false,
+                'stock' => 0,
+                'backorder' => 0,
+                'purchasable' => 'in_stock',
+            ];
+        }
+
+        $totalStock = 0;
+        $totalBackorder = 0;
+        $purchasable = 'in_stock';
+        $isAvailable = false;
+
+        foreach ($product->variants as $variant) {
+            $totalStock += $variant->stock;
+            $totalBackorder += $variant->backorder;
+
+            // Determine overall purchasable mode (prioritize 'always' if any variant has it)
+            if ($variant->purchasable === 'always') {
+                $purchasable = 'always';
+            } elseif ($variant->purchasable === 'backorder' && $purchasable !== 'always') {
+                $purchasable = 'backorder';
+            }
+
+            // Check if this variant is available
+            $variantAvailable = match ($variant->purchasable) {
+                'always' => true,
+                'in_stock' => $variant->stock > 0,
+                'backorder' => $variant->stock > 0 || $variant->backorder > 0,
+                default => false,
+            };
+
+            if ($variantAvailable) {
+                $isAvailable = true;
+            }
+        }
+
+        return [
+            'is_available' => $isAvailable,
+            'stock' => $totalStock,
+            'backorder' => $totalBackorder,
+            'purchasable' => $purchasable,
+        ];
     }
 }
