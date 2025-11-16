@@ -12,9 +12,12 @@ use App\DTOs\DeleteTenantDTO;
 use App\DTOs\TenantFilterDTO;
 use App\Models\Tenant;
 use App\Repositories\Contracts\TenantRepositoryInterface;
+use App\RolesEnum;
 use App\Services\Contracts\FileUploadServiceInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -24,7 +27,8 @@ final class AdminTenantService
 {
     public function __construct(
         private readonly TenantRepositoryInterface $tenantRepository,
-        private readonly FileUploadServiceInterface $fileUploadService
+        private readonly FileUploadServiceInterface $fileUploadService,
+        private readonly UserService $userService
     ) {}
 
     /**
@@ -172,8 +176,32 @@ final class AdminTenantService
         // Prepare tenant data
         $tenantData = $dto->toArray();
 
-        // Create the tenant
-        return $this->tenantRepository->create($tenantData);
+        // Create tenant and provision a tenant-scoped user in a transaction
+        return DB::transaction(function () use ($tenantData, $dto) {
+            $tenant = $this->tenantRepository->create($tenantData);
+
+            // Initialize tenancy context so user creation is properly scoped
+            tenancy()->initialize($tenant);
+
+            try {
+                // Create a user with a random password and assign 'vendor' role (tenant admin)
+                $result = $this->userService->createUserWithRandomPassword([
+                    'name' => $dto->name,
+                    'email' => $dto->settings['contact']['email'],
+                    'email_verified_at' => now(),
+                ], RolesEnum::ASSOCIATION_ADMIN->value);
+
+                Log::info('Provisioned tenant admin user', [
+                    'tenant_id' => $tenant->id,
+                    'user_id' => $result['user']->id ?? null,
+                    'temporary_password' => $result['password'] ?? null,
+                ]);
+            } finally {
+                tenancy()->end();
+            }
+
+            return $tenant->fresh(['domains']);
+        });
     }
 
     /**

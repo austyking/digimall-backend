@@ -9,6 +9,8 @@ use App\DTOs\UpdateVendorDTO;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Repositories\Contracts\VendorRepositoryInterface;
+use App\RolesEnum;
+use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -53,7 +55,7 @@ final readonly class VendorService
                 'name' => $dto->contactName,
                 'email' => $dto->email,
                 'email_verified_at' => now(),
-            ], 'vendor');
+            ], RolesEnum::VENDOR->value);
 
             $user = $result['user'];
             $password = $result['password'];
@@ -129,6 +131,41 @@ final readonly class VendorService
     public function getAllForTenant(string $tenantId, ?int $limit = null): Collection
     {
         return $this->getAllVendors($tenantId, $limit);
+    }
+
+    /**
+     * Get filtered and paginated vendors for a tenant.
+     */
+    public function getFilteredVendors(
+        string $tenantId,
+        ?string $status = null,
+        ?string $search = null,
+        string $sortBy = 'created_at',
+        string $sortDirection = 'desc',
+        int $perPage = 15
+    ): LengthAwarePaginator {
+        return $this->vendorRepository->getFiltered(
+            $tenantId,
+            $status,
+            $search,
+            $sortBy,
+            $sortDirection,
+            $perPage
+        );
+    }
+
+    /**
+     * Get vendor statistics for KPI cards.
+     *
+     * Returns total, active, and pending vendor counts for the given tenant.
+     * This method is independent of any search or filter parameters.
+     *
+     * @param  string  $tenantId  The tenant ID
+     * @return array{total: int, active: int, pending: int} Vendor statistics
+     */
+    public function getTenantVendorStatistics(string $tenantId): array
+    {
+        return $this->vendorRepository->getTenantStatistics($tenantId);
     }
 
     /**

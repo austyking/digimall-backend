@@ -57,6 +57,10 @@ Route::prefix('v1')->middleware([InitializeTenancyByDomain::class])->group(funct
             ->middleware(['auth:api'])
             ->name('vendors.index');
 
+        Route::get('/statistics', [VendorController::class, 'statistics'])
+            ->middleware(['auth:api'])
+            ->name('vendors.statistics');
+
         Route::get('/{id}', [VendorController::class, 'show'])
             ->name('vendors.show');
 

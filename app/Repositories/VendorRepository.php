@@ -111,6 +111,39 @@ final class VendorRepository implements VendorRepositoryInterface
     }
 
     /**
+     * Get filtered and paginated vendors for a tenant.
+     */
+    public function getFiltered(
+        string $tenantId,
+        ?string $status = null,
+        ?string $search = null,
+        string $sortBy = 'created_at',
+        string $sortDirection = 'desc',
+        int $perPage = 15
+    ): LengthAwarePaginator {
+        $query = Vendor::query()->withCount('products')->where('tenant_id', $tenantId);
+
+        // Apply status filter
+        if ($status !== null) {
+            $query->where('status', $status);
+        }
+
+        // Apply search filter
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('business_name', 'LIKE', "%{$search}%")
+                    ->orWhere('email', 'LIKE', "%{$search}%")
+                    ->orWhere('contact_name', 'LIKE', "%{$search}%");
+            });
+        }
+
+        // Apply sorting
+        $query->orderBy($sortBy, $sortDirection);
+
+        return $query->paginate($perPage);
+    }
+
+    /**
      * Get vendors by status.
      */
     public function getByStatus(string $status, ?int $limit = null): Collection
@@ -241,6 +274,28 @@ final class VendorRepository implements VendorRepositoryInterface
             'products_count' => $productsCount,
             'orders_count' => $ordersCount,
             'total_sales' => $totalSales,
+        ];
+    }
+
+    /**
+     * Get tenant-wide vendor statistics for KPI cards.
+     *
+     * Returns total, active, and pending vendor counts for the given tenant.
+     * This method is independent of any search or filter parameters.
+     *
+     * @param  string  $tenantId  The tenant ID
+     * @return array{total: int, active: int, pending: int} Vendor statistics
+     */
+    public function getTenantStatistics(string $tenantId): array
+    {
+        $total = Vendor::where('tenant_id', $tenantId)->count();
+        $active = Vendor::where('tenant_id', $tenantId)->where('status', 'active')->count();
+        $pending = Vendor::where('tenant_id', $tenantId)->where('status', 'pending')->count();
+
+        return [
+            'total' => $total,
+            'active' => $active,
+            'pending' => $pending,
         ];
     }
 

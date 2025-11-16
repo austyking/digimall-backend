@@ -55,6 +55,12 @@ final class VendorResource extends JsonResource
             'created_at' => $this->resource->created_at->toISOString(),
             'updated_at' => $this->resource->updated_at->toISOString(),
 
+            // Calculated fields for frontend display
+            'total_products' => $this->resource->products_count ?? $this->resource->products()->count(),
+            'rating' => 4.5, // TODO: Implement actual rating calculation
+            'total_orders' => 0, // TODO: Implement order count calculation
+            'total_revenue' => 0, // TODO: Implement revenue calculation
+
             // Conditional relationships
             'user' => $this->whenLoaded('user'),
             'tenant' => $this->whenLoaded('tenant'),

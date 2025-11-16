@@ -14,7 +14,8 @@ describe('AdminTenantService Unit Tests', function () {
     beforeEach(function () {
         $this->mockRepository = Mockery::mock(TenantRepositoryInterface::class);
         $this->mockFileUploadService = Mockery::mock(FileUploadServiceInterface::class);
-        $this->service = new AdminTenantService($this->mockRepository, $this->mockFileUploadService);
+        $this->mockUserService = Mockery::mock(App\Services\UserService::class);
+        $this->service = new AdminTenantService($this->mockRepository, $this->mockFileUploadService, $this->mockUserService);
     });
 
     afterEach(function () {
@@ -42,6 +43,14 @@ describe('AdminTenantService Unit Tests', function () {
                 ->once()
                 ->with('GPA')
                 ->andReturn(null);
+            // Expect user service to be called to provision tenant admin
+            $this->mockUserService
+                ->shouldReceive('createUserWithRandomPassword')
+                ->once()
+                ->with(Mockery::on(function ($data) {
+                    return is_array($data) && isset($data['email']) && isset($data['name']);
+                }), 'vendor')
+                ->andReturn(['user' => new \App\Models\User(['id' => 'user-1']), 'password' => 'secret']);
 
             $this->mockRepository
                 ->shouldReceive('create')

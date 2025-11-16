@@ -12,7 +12,7 @@ use Illuminate\Support\Collection;
 
 final class TenantRepository implements TenantRepositoryInterface
 {
-    public function __construct(private FileUploadServiceInterface $fileUploadService) {}
+    public function __construct(private readonly FileUploadServiceInterface $fileUploadService) {}
 
     /**
      * Find a tenant by ID.

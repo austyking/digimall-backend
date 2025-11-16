@@ -87,17 +87,56 @@ final class VendorController extends Controller
      */
     public function index(Request $request): \Illuminate\Http\Resources\Json\AnonymousResourceCollection
     {
-        $perPage = (int) $request->query('per_page', 15);
-        $status = $request->query('status');
-
         // Get current tenant ID from tenancy helper
         $tenantId = tenancy()->tenant?->id;
 
-        $vendors = $status
-            ? $this->vendorService->getByStatus($status, $perPage)
-            : ($tenantId ? $this->vendorService->getAllForTenant($tenantId, $perPage) : collect());
+        if (! $tenantId) {
+            return VendorResource::collection(collect());
+        }
+
+        $perPage = (int) $request->query('per_page', 15);
+        $page = (int) $request->query('page', 1);
+        $status = $request->query('status');
+        $search = $request->query('search');
+        $sortBy = $request->query('sort_by', 'created_at');
+        $sortDirection = $request->query('sort_direction', 'desc');
+
+        $vendors = $this->vendorService->getFilteredVendors(
+            $tenantId,
+            $status,
+            $search,
+            $sortBy,
+            $sortDirection,
+            $perPage
+        );
 
         return VendorResource::collection($vendors);
+    }
+
+    /**
+     * Get vendor statistics for KPI cards.
+     *
+     * Returns total, active, and pending vendor counts for the current tenant.
+     * This endpoint is independent of any search or filter parameters.
+     *
+     * @return JsonResponse HTTP 200 with vendor statistics
+     */
+    public function statistics(): JsonResponse
+    {
+        // Get current tenant ID from tenancy helper
+        $tenantId = tenancy()->tenant?->id;
+
+        if (! $tenantId) {
+            return response()->json([
+                'total' => 0,
+                'active' => 0,
+                'pending' => 0,
+            ]);
+        }
+
+        $statistics = $this->vendorService->getTenantVendorStatistics($tenantId);
+
+        return response()->json($statistics);
     }
 
     /**
