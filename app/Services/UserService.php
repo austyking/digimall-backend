@@ -6,9 +6,10 @@ namespace App\Services;
 
 use App\Models\User;
 use App\Repositories\Contracts\UserRepositoryInterface;
+use App\Services\Contracts\UserServiceInterface;
 use Illuminate\Support\Facades\Hash;
 
-final readonly class UserService
+final readonly class UserService implements UserServiceInterface
 {
     public function __construct(
         private UserRepositoryInterface $userRepository

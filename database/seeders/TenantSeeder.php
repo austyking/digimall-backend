@@ -6,6 +6,8 @@ namespace Database\Seeders;
 
 use App\Models\Tenant;
 use Illuminate\Database\Seeder;
+use Lunar\FieldTypes\TranslatedText;
+use Lunar\Models\CollectionGroup;
 
 class TenantSeeder extends Seeder
 {
@@ -49,8 +51,12 @@ class TenantSeeder extends Seeder
             ]);
 
         // Create domains for GRNMA
-        $grnma->domains()->create(['domain' => 'shop.grnmainfonet.test']); // Local development
-        $grnma->domains()->create(['domain' => 'grnma.digimall.test']); // Alternative local
+        if (! \Stancl\Tenancy\Database\Models\Domain::where('domain', 'shop.grnmainfonet.test')->exists()) {
+            $grnma->domains()->create(['domain' => 'shop.grnmainfonet.test']); // Local development
+        }
+        if (! \Stancl\Tenancy\Database\Models\Domain::where('domain', 'grnma.digimall.test')->exists()) {
+            $grnma->domains()->create(['domain' => 'grnma.digimall.test']); // Alternative local
+        }
 
         // GMA Tenant
         $gma = Tenant::factory()
@@ -87,8 +93,12 @@ class TenantSeeder extends Seeder
             ]);
 
         // Create domains for GMA
-        $gma->domains()->create(['domain' => 'mall.ghanamedassoc.test']); // Local development
-        $gma->domains()->create(['domain' => 'gma.digimall.test']); // Alternative local
+        if (! \Stancl\Tenancy\Database\Models\Domain::where('domain', 'mall.ghanamedassoc.test')->exists()) {
+            $gma->domains()->create(['domain' => 'mall.ghanamedassoc.test']); // Local development
+        }
+        if (! \Stancl\Tenancy\Database\Models\Domain::where('domain', 'gma.digimall.test')->exists()) {
+            $gma->domains()->create(['domain' => 'gma.digimall.test']);
+        } // Alternative local
 
         // Additional Active Tenants for Testing
         $psgh = Tenant::factory()
@@ -107,7 +117,9 @@ class TenantSeeder extends Seeder
                 'status' => 'active',
                 'created_at' => now()->subDays(60),
             ]);
-        $psgh->domains()->create(['domain' => 'psgh.digimall.test']);
+        if (! \Stancl\Tenancy\Database\Models\Domain::where('domain', 'psgh.digimall.test')->exists()) {
+            $psgh->domains()->create(['domain' => 'psgh.digimall.test']);
+        }
 
         $ghalaw = Tenant::factory()
             ->forAssociation(
@@ -119,7 +131,9 @@ class TenantSeeder extends Seeder
                 'status' => 'active',
                 'created_at' => now()->subDays(45),
             ]);
-        $ghalaw->domains()->create(['domain' => 'ghalaw.digimall.test']);
+        if (! \Stancl\Tenancy\Database\Models\Domain::where('domain', 'ghalaw.digimall.test')->exists()) {
+            $ghalaw->domains()->create(['domain' => 'ghalaw.digimall.test']);
+        }
 
         $ghaeng = Tenant::factory()
             ->forAssociation(
@@ -131,7 +145,9 @@ class TenantSeeder extends Seeder
                 'status' => 'active',
                 'created_at' => now()->subDays(30),
             ]);
-        $ghaeng->domains()->create(['domain' => 'ghaeng.digimall.test']);
+        if (! \Stancl\Tenancy\Database\Models\Domain::where('domain', 'ghaeng.digimall.test')->exists()) {
+            $ghaeng->domains()->create(['domain' => 'ghaeng.digimall.test']);
+        }
 
         $ghateach = Tenant::factory()
             ->forAssociation(
@@ -143,7 +159,9 @@ class TenantSeeder extends Seeder
                 'status' => 'active',
                 'created_at' => now()->subDays(15),
             ]);
-        $ghateach->domains()->create(['domain' => 'ghateach.digimall.test']);
+        if (! \Stancl\Tenancy\Database\Models\Domain::where('domain', 'ghateach.digimall.test')->exists()) {
+            $ghateach->domains()->create(['domain' => 'ghateach.digimall.test']);
+        }
 
         $ghaacc = Tenant::factory()
             ->forAssociation(
@@ -155,7 +173,9 @@ class TenantSeeder extends Seeder
                 'status' => 'active',
                 'created_at' => now()->subDays(7),
             ]);
-        $ghaacc->domains()->create(['domain' => 'ghaacc.digimall.test']);
+        if (! \Stancl\Tenancy\Database\Models\Domain::where('domain', 'ghaacc.digimall.test')->exists()) {
+            $ghaacc->domains()->create(['domain' => 'ghaacc.digimall.test']);
+        }
 
         // Inactive Tenants for Testing
         $gmda = Tenant::factory()
@@ -176,7 +196,9 @@ class TenantSeeder extends Seeder
                     ],
                 ],
             ]);
-        $gmda->domains()->create(['domain' => 'gmda.digimall.test']);
+        if (! \Stancl\Tenancy\Database\Models\Domain::where('domain', 'gmda.digimall.test')->exists()) {
+            $gmda->domains()->create(['domain' => 'gmda.digimall.test']);
+        }
 
         $grna = Tenant::factory()
             ->forAssociation(
@@ -196,11 +218,84 @@ class TenantSeeder extends Seeder
                     ],
                 ],
             ]);
-        $grna->domains()->create(['domain' => 'grna.digimall.test']);
+        if (! \Stancl\Tenancy\Database\Models\Domain::where('domain', 'grna.digimall.test')->exists()) {
+            $grna->domains()->create(['domain' => 'grna.digimall.test']);
+        }
+
+        // Seed taxonomy for each active tenant
+        $this->seedTaxonomyForTenant($grnma);
+        $this->seedTaxonomyForTenant($gma);
+        $this->seedTaxonomyForTenant($psgh);
+        $this->seedTaxonomyForTenant($ghalaw);
+        $this->seedTaxonomyForTenant($ghaeng);
+        $this->seedTaxonomyForTenant($ghateach);
+        $this->seedTaxonomyForTenant($ghaacc);
 
         $this->command->info('Tenants seeded successfully!');
         $this->command->info('Active Tenants: 8 | Inactive Tenants: 2');
         $this->command->info('GRNMA ID: '.$grnma->id);
         $this->command->info('GMA ID: '.$gma->id);
+    }
+
+    /**
+     * Seed tenant-specific taxonomy data.
+     */
+    private function seedTaxonomyForTenant(Tenant $tenant): void
+    {
+        // Ensure collection group exists (global)
+        $collectionGroup = CollectionGroup::firstOrCreate([
+            'handle' => 'main',
+        ], [
+            'name' => 'Main',
+        ]);
+
+        // Seed categories for this tenant
+        $tenant->run(function () use ($collectionGroup, $tenant) {
+            // Ensure default language exists for this tenant
+            \Lunar\Models\Language::firstOrCreate([
+                'code' => 'en',
+            ], [
+                'name' => 'English',
+                'default' => true,
+            ]);
+
+            // Create default categories
+            \App\Models\Collection::create([
+                'collection_group_id' => $collectionGroup->id,
+                'attribute_data' => [
+                    'name' => new TranslatedText(['en' => 'Medical Supplies']),
+                    'description' => new TranslatedText(['en' => 'Essential medical supplies and equipment']),
+                ],
+                'tenant_id' => $tenant->id,
+                'type' => 'static',
+                'sort' => 'custom',
+            ]);
+
+            \App\Models\Collection::create([
+                'collection_group_id' => $collectionGroup->id,
+                'attribute_data' => [
+                    'name' => new TranslatedText(['en' => 'Pharmaceuticals']),
+                    'description' => new TranslatedText(['en' => 'Medicines and pharmaceutical products']),
+                ],
+                'tenant_id' => $tenant->id,
+                'type' => 'static',
+                'sort' => 'custom',
+            ]);
+
+            // Create default brands
+            \App\Models\Brand::create([
+                'name' => $tenant->display_name.' Official',
+                'attribute_data' => [
+                    'name' => new TranslatedText(['en' => $tenant->display_name.' Official']),
+                    'description' => new TranslatedText(['en' => 'Official brand for '.$tenant->display_name]),
+                ],
+                'tenant_id' => $tenant->id,
+            ]);
+
+            // Create default tags
+            \App\Models\Tag::create(['value' => 'featured', 'tenant_id' => $tenant->id]);
+            \App\Models\Tag::create(['value' => 'new', 'tenant_id' => $tenant->id]);
+            \App\Models\Tag::create(['value' => 'bestseller', 'tenant_id' => $tenant->id]);
+        });
     }
 }

@@ -14,6 +14,7 @@ use App\Models\Tenant;
 use App\Repositories\Contracts\TenantRepositoryInterface;
 use App\RolesEnum;
 use App\Services\Contracts\FileUploadServiceInterface;
+use App\Services\Contracts\UserServiceInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
@@ -28,7 +29,7 @@ final class AdminTenantService
     public function __construct(
         private readonly TenantRepositoryInterface $tenantRepository,
         private readonly FileUploadServiceInterface $fileUploadService,
-        private readonly UserService $userService
+        private readonly UserServiceInterface $userService
     ) {}
 
     /**
@@ -185,17 +186,25 @@ final class AdminTenantService
 
             try {
                 // Create a user with a random password and assign 'vendor' role (tenant admin)
-                $result = $this->userService->createUserWithRandomPassword([
-                    'name' => $dto->name,
-                    'email' => $dto->settings['contact']['email'],
-                    'email_verified_at' => now(),
-                ], RolesEnum::ASSOCIATION_ADMIN->value);
+                // Only create user if contact email is provided in settings
+                if (isset($dto->settings['contact']['email'])) {
+                    $result = $this->userService->createUserWithRandomPassword([
+                        'name' => $dto->name,
+                        'email' => $dto->settings['contact']['email'],
+                        'email_verified_at' => now(),
+                    ], RolesEnum::ASSOCIATION_ADMIN->value);
 
-                Log::info('Provisioned tenant admin user', [
-                    'tenant_id' => $tenant->id,
-                    'user_id' => $result['user']->id ?? null,
-                    'temporary_password' => $result['password'] ?? null,
-                ]);
+                    Log::info('Provisioned tenant admin user', [
+                        'tenant_id' => $tenant->id,
+                        'user_id' => $result['user']->id ?? null,
+                        'temporary_password' => $result['password'] ?? null,
+                    ]);
+                } else {
+                    Log::info('Tenant created without admin user - no contact email provided', [
+                        'tenant_id' => $tenant->id,
+                        'tenant_name' => $dto->name,
+                    ]);
+                }
             } finally {
                 tenancy()->end();
             }

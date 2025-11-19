@@ -5,25 +5,19 @@ declare(strict_types=1);
 use App\DTOs\AttachProductsToCollectionDTO;
 use App\DTOs\CreateProductVariantDTO;
 use App\DTOs\UpdateProductVariantDTO;
+use App\Models\Product;
 use App\Repositories\Contracts\PriceRepositoryInterface;
 use App\Repositories\Contracts\ProductCollectionRepositoryInterface;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Repositories\Contracts\ProductVariantRepositoryInterface;
 use App\Services\ProductService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Lunar\Models\Currency;
-use Lunar\Models\Language;
 use Lunar\Models\Price;
-use Lunar\Models\Product;
 use Lunar\Models\ProductVariant;
 use Mockery;
 
-uses(RefreshDatabase::class);
-
 describe('ProductService', function () {
     beforeEach(function () {
-        Language::factory()->create(['code' => 'en', 'default' => true]);
-
         $this->productRepo = Mockery::mock(ProductRepositoryInterface::class);
         $this->variantRepo = Mockery::mock(ProductVariantRepositoryInterface::class);
         $this->collectionRepo = Mockery::mock(ProductCollectionRepositoryInterface::class);
@@ -69,12 +63,14 @@ describe('ProductService', function () {
     });
 
     test('creates variant with price', function () {
-        $product = Product::factory()->make(['id' => 123]);
+        $product = Mockery::mock(Product::class)->makePartial();
+        $product->id = 123;
         $variant = Mockery::mock(ProductVariant::class)->makePartial();
         $variant->id = 456;
 
-        // Ensure currency with id=1 exists in DB
-        $currency = Currency::factory()->create(['id' => 1]);
+        // Mock currency instead of creating in DB
+        $currency = Mockery::mock(Currency::class)->makePartial();
+        $currency->id = 1;
 
         $dto = new CreateProductVariantDTO(
             sku: 'TEST-SKU',
@@ -115,6 +111,20 @@ describe('ProductService', function () {
             ->with(456, ProductVariant::class, 99.99, $currency->id)
             ->andReturn($price);
 
+        // Mock the prices relationship on the variant
+        $pricesRelation = Mockery::mock('Illuminate\Database\Eloquent\Relations\MorphMany');
+        $pricesRelation->shouldReceive('create')
+            ->once()
+            ->with([
+                'price' => 99.99,
+                'currency_id' => 1,
+            ])
+            ->andReturn($price);
+
+        $variant->shouldReceive('prices')
+            ->once()
+            ->andReturn($pricesRelation);
+
         $variant->shouldReceive('fresh')
             ->once()
             ->with(['prices.currency', 'values.option'])
@@ -126,7 +136,8 @@ describe('ProductService', function () {
     });
 
     test('updates variant without price change', function () {
-        $product = Product::factory()->make(['id' => 123]);
+        $product = Mockery::mock(Product::class)->makePartial();
+        $product->id = 123;
         $variant = Mockery::mock(ProductVariant::class)->makePartial();
         $variant->id = 456;
         $variant->product_id = 123;
@@ -167,11 +178,13 @@ describe('ProductService', function () {
     });
 
     test('updates variant with price change', function () {
-        $product = Product::factory()->make(['id' => 123]);
+        $product = Mockery::mock(Product::class)->makePartial();
+        $product->id = 123;
         $variant = Mockery::mock(ProductVariant::class)->makePartial();
         $variant->id = 456;
         $variant->product_id = 123;
-        $currency = Currency::factory()->make(['id' => 1]);
+        $currency = Mockery::mock(Currency::class)->makePartial();
+        $currency->id = 1;
 
         $dto = new UpdateProductVariantDTO(
             sku: null,
@@ -216,7 +229,8 @@ describe('ProductService', function () {
     });
 
     test('deletes variant', function () {
-        $product = Product::factory()->make(['id' => 123]);
+        $product = Mockery::mock(Product::class)->makePartial();
+        $product->id = 123;
         $variant = Mockery::mock(ProductVariant::class)->makePartial();
         $variant->id = 789;
         $variant->product_id = 123;
@@ -242,7 +256,8 @@ describe('ProductService', function () {
     });
 
     test('finds product by ID', function () {
-        $product = Product::factory()->make(['id' => 999]);
+        $product = Mockery::mock(Product::class)->makePartial();
+        $product->id = 999;
 
         $this->productRepo->shouldReceive('find')
             ->once()

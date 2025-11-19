@@ -21,6 +21,9 @@ beforeEach(function (): void {
 
     $this->tenant = Tenant::where('name', 'GRNMA')->first();
 
+    // Initialize tenancy for this tenant
+    tenancy()->initialize($this->tenant);
+
     $this->user = User::factory()->create();
     $this->user->assignRole('association-administrator');
     $this->actingAs($this->user, 'api');
@@ -31,9 +34,18 @@ beforeEach(function (): void {
     $this->user->vendor_id = $this->vendor->id;
 
     // Setup necessary models
-    $this->currency = Currency::factory()->create(['default' => true]);
-    $this->taxClass = TaxClass::factory()->create(['name' => 'Standard', 'default' => true]);
-    $this->language = Language::factory()->create(['code' => 'en', 'default' => true]);
+    $this->currency = Currency::firstOrCreate(
+        ['code' => 'GHS'],
+        ['name' => 'Ghana Cedi', 'exchange_rate' => 1, 'decimal_places' => 2, 'enabled' => true, 'default' => true]
+    );
+    $this->taxClass = TaxClass::firstOrCreate(
+        ['name' => 'Standard'],
+        ['default' => true]
+    );
+    $this->language = Language::firstOrCreate(
+        ['code' => 'en'],
+        ['name' => 'English', 'default' => true]
+    );
     $this->product = Product::factory()->create(['vendor_id' => $this->vendor->id]);
 });
 

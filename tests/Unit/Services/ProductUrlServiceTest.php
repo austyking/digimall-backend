@@ -6,19 +6,13 @@ use App\DTOs\CreateProductUrlDTO;
 use App\DTOs\UpdateProductUrlDTO;
 use App\Repositories\Contracts\UrlRepositoryInterface;
 use App\Services\ProductUrlService;
-use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Collection;
-use Lunar\Models\Language;
 use Lunar\Models\Product;
 use Lunar\Models\Url;
 use Mockery;
 
-uses(RefreshDatabase::class);
-
 describe('ProductUrlService', function () {
     beforeEach(function () {
-        Language::factory()->create(['code' => 'en', 'default' => true]);
-
         $this->urlRepository = Mockery::mock(UrlRepositoryInterface::class);
 
         $this->service = new ProductUrlService(
@@ -31,8 +25,11 @@ describe('ProductUrlService', function () {
     });
 
     test('creates URL for product', function () {
-        $product = Product::factory()->make(['id' => 123]);
-        $language = Language::factory()->make(['id' => 1, 'code' => 'en']);
+        $product = Mockery::mock(Product::class)->makePartial();
+        $product->id = 123;
+        $language = Mockery::mock(Language::class)->makePartial();
+        $language->id = 1;
+        $language->code = 'en';
 
         $dto = new CreateProductUrlDTO(
             slug: 'test-product',
@@ -40,13 +37,12 @@ describe('ProductUrlService', function () {
             default: true
         );
 
-        $expectedUrl = Url::factory()->make([
-            'slug' => 'test-product',
-            'element_type' => Product::class,
-            'element_id' => 123,
-            'language_id' => 1,
-            'default' => true,
-        ]);
+        $expectedUrl = Mockery::mock(Url::class)->makePartial();
+        $expectedUrl->slug = 'test-product';
+        $expectedUrl->element_type = Product::class;
+        $expectedUrl->element_id = 123;
+        $expectedUrl->language_id = 1;
+        $expectedUrl->default = true;
 
         // Mock slug exists check
         $this->urlRepository
@@ -81,24 +77,22 @@ describe('ProductUrlService', function () {
     });
 
     test('updates URL', function () {
-        $url = Url::factory()->make([
-            'id' => 1,
-            'slug' => 'old-slug',
-            'element_id' => 123,
-            'language_id' => 1,
-            'default' => false,
-        ]);
+        $url = Mockery::mock(Url::class)->makePartial();
+        $url->id = 1;
+        $url->slug = 'old-slug';
+        $url->element_id = 123;
+        $url->language_id = 1;
+        $url->default = false;
 
         $dto = new UpdateProductUrlDTO(
             slug: 'new-slug',
             default: true
         );
 
-        $updatedUrl = Url::factory()->make([
-            'id' => 1,
-            'slug' => 'new-slug',
-            'default' => true,
-        ]);
+        $updatedUrl = Mockery::mock(Url::class)->makePartial();
+        $updatedUrl->id = 1;
+        $updatedUrl->slug = 'new-slug';
+        $updatedUrl->default = true;
 
         // Mock find URL
         $this->urlRepository
@@ -138,19 +132,17 @@ describe('ProductUrlService', function () {
     });
 
     test('deletes URL and promotes another to default', function () {
-        $url1 = Url::factory()->make([
-            'id' => 1,
-            'element_id' => 123,
-            'language_id' => 1,
-            'default' => true,
-        ]);
+        $url1 = Mockery::mock(Url::class)->makePartial();
+        $url1->id = 1;
+        $url1->element_id = 123;
+        $url1->language_id = 1;
+        $url1->default = true;
 
-        $url2 = Url::factory()->make([
-            'id' => 2,
-            'element_id' => 123,
-            'language_id' => 1,
-            'default' => false,
-        ]);
+        $url2 = Mockery::mock(Url::class)->makePartial();
+        $url2->id = 2;
+        $url2->element_id = 123;
+        $url2->language_id = 1;
+        $url2->default = false;
 
         $this->urlRepository
             ->shouldReceive('find')
@@ -211,19 +203,17 @@ describe('ProductUrlService', function () {
     });
 
     test('sets URL as default for language', function () {
-        $url = Url::factory()->make([
-            'id' => 1,
-            'element_id' => 123,
-            'language_id' => 1,
-            'default' => false,
-        ]);
+        $url = Mockery::mock(Url::class)->makePartial();
+        $url->id = 1;
+        $url->element_id = 123;
+        $url->language_id = 1;
+        $url->default = false;
 
-        $otherUrl = Url::factory()->make([
-            'id' => 2,
-            'element_id' => 123,
-            'language_id' => 1,
-            'default' => true,
-        ]);
+        $otherUrl = Mockery::mock(Url::class)->makePartial();
+        $otherUrl->id = 2;
+        $otherUrl->element_id = 123;
+        $otherUrl->language_id = 1;
+        $otherUrl->default = true;
 
         $this->urlRepository
             ->shouldReceive('find')
@@ -255,10 +245,9 @@ describe('ProductUrlService', function () {
     });
 
     test('gets default URL for language', function () {
-        $url = Url::factory()->make([
-            'slug' => 'test-product',
-            'default' => true,
-        ]);
+        $url = Mockery::mock(Url::class)->makePartial();
+        $url->slug = 'test-product';
+        $url->default = true;
 
         $this->urlRepository
             ->shouldReceive('getDefaultUrl')
@@ -273,10 +262,11 @@ describe('ProductUrlService', function () {
     });
 
     test('gets all URLs for product', function () {
-        $urls = collect([
-            Url::factory()->make(['slug' => 'test-product-en']),
-            Url::factory()->make(['slug' => 'test-produit-fr']),
-        ]);
+        $url1 = Mockery::mock(Url::class)->makePartial();
+        $url1->slug = 'test-product-en';
+        $url2 = Mockery::mock(Url::class)->makePartial();
+        $url2->slug = 'test-produit-fr';
+        $urls = collect([$url1, $url2]);
 
         $this->urlRepository
             ->shouldReceive('findByElement')

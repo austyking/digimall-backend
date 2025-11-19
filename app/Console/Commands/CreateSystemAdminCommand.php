@@ -44,7 +44,7 @@ final class CreateSystemAdminCommand extends Command
         // Get input from options or prompt
         $name = $this->option('name') ?: $this->ask('Name', 'System Administrator');
         $email = $this->option('email') ?: $this->ask('Email', 'admin@digimall.com');
-        $password = $this->option('password') ?: $this->secret('Password (leave empty for default)') ?: 'Password123!';
+        $password = $this->option('password') ?: $this->secret('Password (leave empty for default)') ?: 'admin123.';
 
         // Validate input
         $validator = Validator::make([

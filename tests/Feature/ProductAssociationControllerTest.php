@@ -25,7 +25,14 @@ describe('ProductAssociationController', function () {
 
         $this->tenantUrl = 'http://shop.grnmainfonet.test';
 
-        Language::factory()->create(['code' => 'en', 'default' => true]);
+        // Initialize tenant context for database operations
+        tenancy()->initialize($this->tenant);
+
+        // Ensure we have an English language for the test
+        Language::firstOrCreate(
+            ['code' => 'en'],
+            ['name' => 'English', 'default' => true]
+        );
 
         $this->product = Product::factory()->create();
         $this->associatedProduct1 = Product::factory()->create();

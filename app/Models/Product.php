@@ -17,6 +17,11 @@ use Lunar\Models\Product as LunarProduct;
 class Product extends LunarProduct
 {
     /**
+     * The factory associated with the model.
+     */
+    protected static string $factory = \Database\Factories\ProductFactory::class;
+
+    /**
      * The attributes that are mass assignable.
      */
     protected $fillable = [

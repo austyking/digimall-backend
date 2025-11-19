@@ -433,4 +433,179 @@ final class ProductRepository implements ProductRepositoryInterface
             ->where('vendor_id', $vendorId)
             ->count();
     }
+
+    /**
+     * Get filtered products with pagination.
+     */
+    public function filterPaginated(array $filters, int $perPage = 15): LengthAwarePaginator
+    {
+        $query = Product::query();
+
+        // Apply the same filters as the filter method
+        $this->applyFilters($query, $filters);
+
+        return $query->paginate($perPage);
+    }
+
+    /**
+     * Get products pending admin review.
+     */
+    public function getPendingReview(int $perPage = 15): LengthAwarePaginator
+    {
+        return Product::query()
+            ->where('status', 'pending')
+            ->paginate($perPage);
+    }
+
+    /**
+     * Update product status.
+     */
+    public function updateStatus(int $id, string $status): bool
+    {
+        $product = $this->find($id);
+
+        if (! $product) {
+            return false;
+        }
+
+        $product->status = $status;
+        $product->save();
+
+        return true;
+    }
+
+    /**
+     * Count all products.
+     */
+    public function count(): int
+    {
+        return Product::query()->count();
+    }
+
+    /**
+     * Count products by status.
+     */
+    public function countByStatus(string $status): int
+    {
+        return Product::query()
+            ->where('status', $status)
+            ->count();
+    }
+
+    /**
+     * Count low stock products.
+     */
+    public function countLowStock(int $threshold = 10): int
+    {
+        return Product::query()
+            ->whereHas('variants', function ($query) use ($threshold): void {
+                $query->where('stock', '<=', $threshold)
+                    ->where('stock', '>', 0);
+            })
+            ->count();
+    }
+
+    /**
+     * Apply filters to query (extracted from filter method).
+     */
+    private function applyFilters($query, array $filters): void
+    {
+        // Text search
+        if (! empty($filters['query'])) {
+            $query->where(function ($q) use ($filters): void {
+                $q->where('attribute_data->name->value', 'like', '%'.$filters['query'].'%')
+                    ->orWhere('attribute_data->description->value', 'like', '%'.$filters['query'].'%')
+                    ->orWhere('attribute_data->short_description->value', 'like', '%'.$filters['query'].'%');
+            });
+        }
+
+        // Status filter
+        if (! empty($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        // Brand filter
+        if (! empty($filters['brand_id'])) {
+            $query->where('brand_id', $filters['brand_id']);
+        }
+
+        // Product type filter
+        if (! empty($filters['product_type_id'])) {
+            $query->where('product_type_id', $filters['product_type_id']);
+        }
+
+        // Vendor filter
+        if (! empty($filters['vendor_id'])) {
+            $query->where('vendor_id', $filters['vendor_id']);
+        }
+
+        // ID filter (for whereIn scenarios)
+        if (! empty($filters['id']) && is_array($filters['id'])) {
+            $query->whereIn('id', $filters['id']);
+        }
+
+        // Collection filter
+        if (! empty($filters['collection_id'])) {
+            $query->whereHas('collections', function ($q) use ($filters): void {
+                $q->where('collection_id', $filters['collection_id']);
+            });
+        }
+
+        // Tags filter
+        if (! empty($filters['tags']) && is_array($filters['tags'])) {
+            $query->whereHas('tags', function ($q) use ($filters): void {
+                $q->whereIn('tag_id', $filters['tags']);
+            });
+        }
+
+        // Price range filter
+        if (isset($filters['min_price']) || isset($filters['max_price'])) {
+            $query->whereHas('variants', function ($q) use ($filters): void {
+                if (isset($filters['min_price'])) {
+                    $q->where('price', '>=', $filters['min_price']);
+                }
+                if (isset($filters['max_price'])) {
+                    $q->where('price', '<=', $filters['max_price']);
+                }
+            });
+        }
+
+        // In stock filter
+        if (isset($filters['in_stock'])) {
+            if ($filters['in_stock']) {
+                $query->whereHas('variants', function ($q): void {
+                    $q->where('stock', '>', 0)->where('purchasable', true);
+                });
+            } else {
+                $query->whereDoesntHave('variants', function ($q): void {
+                    $q->where('stock', '>', 0)->where('purchasable', true);
+                });
+            }
+        }
+
+        // Sorting
+        if (! empty($filters['sort_by'])) {
+            $direction = $filters['sort_direction'] ?? 'asc';
+            switch ($filters['sort_by']) {
+                case 'name':
+                    $query->orderBy('attribute_data->name', $direction);
+                    break;
+                case 'price':
+                    $query->leftJoin('product_variants', 'products.id', '=', 'product_variants.product_id')
+                        ->orderBy('product_variants.price', $direction)
+                        ->select('products.*');
+                    break;
+                case 'created_at':
+                    $query->orderBy('created_at', $direction);
+                    break;
+                case 'updated_at':
+                    $query->orderBy('updated_at', $direction);
+                    break;
+                default:
+                    $query->orderBy('created_at', 'desc');
+            }
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+    }
 }

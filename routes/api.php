@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 use App\Http\Controllers\Api\Tenant\ShowTenantBrandingController;
 use App\Http\Controllers\Api\Tenant\ShowTenantConfigController;
+use App\Http\Controllers\Api\V1\Admin\AdminProductController;
 use App\Http\Controllers\Api\V1\Admin\AdminTenantController;
 use App\Http\Controllers\Api\V1\Admin\TenantStatisticsController;
 use App\Http\Controllers\Api\V1\Auth\LoginController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Api\V1\Product\ProductInventoryController;
 use App\Http\Controllers\Api\V1\Product\ProductMediaController;
 use App\Http\Controllers\Api\V1\Product\ProductUrlController;
 use App\Http\Controllers\Api\V1\Product\ProductVariantController;
+use App\Http\Controllers\Api\V1\Tenant\TenantTaxonomyController;
 use App\Http\Controllers\Api\V1\VendorController;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Support\Facades\Route;
@@ -207,6 +209,46 @@ Route::prefix('v1')->middleware([InitializeTenancyByDomain::class])->group(funct
             ->name('products.low-stock');
     });
 
+    // Taxonomy management endpoints
+    Route::prefix('taxonomy')->middleware(['auth:api', 'role:association-administrator'])->group(function (): void {
+        // Categories
+        Route::prefix('categories')->group(function (): void {
+            Route::get('/', [TenantTaxonomyController::class, 'getCategories'])->name('tenant.taxonomy.categories.index');
+            Route::post('/', [TenantTaxonomyController::class, 'createCategory'])->name('tenant.taxonomy.categories.create');
+            Route::get('/tree', [TenantTaxonomyController::class, 'getCategoryTree'])->name('tenant.taxonomy.categories.tree');
+            Route::get('/{category}', [TenantTaxonomyController::class, 'getCategory'])->name('tenant.taxonomy.categories.show');
+            Route::put('/{category}', [TenantTaxonomyController::class, 'updateCategory'])->name('tenant.taxonomy.categories.update');
+            Route::delete('/{category}', [TenantTaxonomyController::class, 'deleteCategory'])->name('tenant.taxonomy.categories.delete');
+        });
+
+        // Brands
+        Route::prefix('brands')->group(function (): void {
+            Route::get('/', [TenantTaxonomyController::class, 'getBrands'])->name('tenant.taxonomy.brands.index');
+            Route::post('/', [TenantTaxonomyController::class, 'createBrand'])->name('tenant.taxonomy.brands.create');
+            Route::get('/{brand}', [TenantTaxonomyController::class, 'getBrand'])->name('tenant.taxonomy.brands.show');
+            Route::put('/{brand}', [TenantTaxonomyController::class, 'updateBrand'])->name('tenant.taxonomy.brands.update');
+            Route::delete('/{brand}', [TenantTaxonomyController::class, 'deleteBrand'])->name('tenant.taxonomy.brands.delete');
+        });
+
+        // Attributes
+        Route::prefix('attributes')->group(function (): void {
+            Route::get('/', [TenantTaxonomyController::class, 'getAttributes'])->name('tenant.taxonomy.attributes.index');
+            Route::post('/', [TenantTaxonomyController::class, 'createAttribute'])->name('tenant.taxonomy.attributes.create');
+            Route::get('/{attribute}', [TenantTaxonomyController::class, 'getAttribute'])->name('tenant.taxonomy.attributes.show');
+            Route::put('/{attribute}', [TenantTaxonomyController::class, 'updateAttribute'])->name('tenant.taxonomy.attributes.update');
+            Route::delete('/{attribute}', [TenantTaxonomyController::class, 'deleteAttribute'])->name('tenant.taxonomy.attributes.delete');
+        });
+
+        // Tags
+        Route::prefix('tags')->group(function (): void {
+            Route::get('/', [TenantTaxonomyController::class, 'getTags'])->name('tenant.taxonomy.tags.index');
+            Route::post('/', [TenantTaxonomyController::class, 'createTag'])->name('tenant.taxonomy.tags.create');
+            Route::get('/{tag}', [TenantTaxonomyController::class, 'getTag'])->name('tenant.taxonomy.tags.show');
+            Route::put('/{tag}', [TenantTaxonomyController::class, 'updateTag'])->name('tenant.taxonomy.tags.update');
+            Route::delete('/{tag}', [TenantTaxonomyController::class, 'deleteTag'])->name('tenant.taxonomy.tags.delete');
+        });
+    });
+
     // Additional API routes will go here
     // Route::prefix('cart')->group(base_path('routes/api/cart.php'));
     // Route::prefix('orders')->group(base_path('routes/api/orders.php'));
@@ -244,5 +286,15 @@ Route::prefix('v1/admin')->middleware(['auth:api'])->group(function (): void {
         Route::get('/summary', [TenantStatisticsController::class, 'summary'])->name('admin.statistics.summary');
         Route::get('/growth', [TenantStatisticsController::class, 'growth'])->name('admin.statistics.growth');
         Route::get('/distribution', [TenantStatisticsController::class, 'distribution'])->name('admin.statistics.distribution');
+    });
+
+    // Product oversight endpoints
+    Route::prefix('products')->group(function (): void {
+        Route::get('/', [AdminProductController::class, 'index'])->name('admin.products.index');
+        Route::get('/statistics', [AdminProductController::class, 'statistics'])->name('admin.products.statistics');
+        Route::get('/pending-review', [AdminProductController::class, 'pendingReview'])->name('admin.products.pending-review');
+        Route::get('/{id}', [AdminProductController::class, 'show'])->name('admin.products.show');
+        Route::post('/{id}/approve', [AdminProductController::class, 'approve'])->name('admin.products.approve');
+        Route::post('/{id}/reject', [AdminProductController::class, 'reject'])->name('admin.products.reject');
     });
 });

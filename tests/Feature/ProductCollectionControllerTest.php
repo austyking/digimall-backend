@@ -19,17 +19,29 @@ describe('ProductCollectionController', function () {
 
         $this->tenant = Tenant::where('name', 'GRNMA')->first();
 
+        // Initialize tenancy for this tenant
+        tenancy()->initialize($this->tenant);
+
         $this->user = User::factory()->create();
         $this->user->assignRole('association-administrator');
         $this->actingAs($this->user, 'api');
 
         $this->tenantUrl = 'http://shop.grnmainfonet.test';
 
-        Language::factory()->create(['code' => 'en', 'default' => true]);
+        Language::firstOrCreate(['code' => 'en'], ['name' => 'English', 'default' => true]);
 
-        $this->product = Product::factory()->create();
-        $this->collection1 = Collection::factory()->create();
-        $this->collection2 = Collection::factory()->create();
+        // Create product manually to avoid factory issues
+        $productType = \Lunar\Models\ProductType::factory()->create();
+        $this->product = Product::create([
+            'product_type_id' => $productType->id,
+            'status' => 'published',
+            'attribute_data' => collect([
+                'name' => new \Lunar\FieldTypes\Text('Test Product'),
+                'description' => new \Lunar\FieldTypes\Text('Test description'),
+            ]),
+        ]);
+        $this->collection1 = Collection::factory()->create(['tenant_id' => $this->tenant->id]);
+        $this->collection2 = Collection::factory()->create(['tenant_id' => $this->tenant->id]);
     });
 
     test('attaches product to collections', function () {

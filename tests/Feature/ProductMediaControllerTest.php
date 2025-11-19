@@ -20,6 +20,9 @@ beforeEach(function () {
 
     $this->tenant = Tenant::where('name', 'GRNMA')->first();
 
+    // Initialize tenancy for this tenant
+    tenancy()->initialize($this->tenant);
+
     $this->user = User::factory()->create();
     $this->user->assignRole('association-administrator');
     $this->actingAs($this->user, 'api');
@@ -31,7 +34,10 @@ beforeEach(function () {
 
     Storage::fake('public');
 
-    Language::factory()->create(['code' => 'en', 'default' => true]);
+    Language::firstOrCreate(
+        ['code' => 'en'],
+        ['name' => 'English', 'default' => true]
+    );
 
     $this->product = Product::factory()->create(['vendor_id' => $this->vendor->id]);
 });
@@ -120,7 +126,7 @@ describe('ProductMediaController', function () {
                 'data' => [
                     'url' => null,
                     'path' => null,
-                ]
+                ],
             ]);
     });
 

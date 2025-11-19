@@ -19,6 +19,9 @@ beforeEach(function () {
 
     $this->tenant = Tenant::where('name', 'GRNMA')->first();
 
+    // Initialize tenancy for this tenant
+    tenancy()->initialize($this->tenant);
+
     $this->user = User::factory()->create();
     $this->user->assignRole('association-administrator');
     $this->actingAs($this->user, 'api');
@@ -28,8 +31,10 @@ beforeEach(function () {
     $this->vendor = Vendor::factory()->create(['user_id' => $this->user->id]);
     $this->user->vendor_id = $this->vendor->id;
 
-
-    $this->language = Language::factory()->create(['code' => 'en', 'default' => true]);
+    $this->language = Language::firstOrCreate(
+        ['code' => 'en'],
+        ['name' => 'English', 'default' => true]
+    );
 
     $this->product = Product::factory()->create(['vendor_id' => $this->vendor->id]);
 });

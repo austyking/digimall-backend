@@ -24,6 +24,9 @@ beforeEach(function (): void {
 
     $this->tenant = Tenant::where('name', 'GRNMA')->first();
 
+    // Initialize tenancy for this tenant
+    tenancy()->initialize($this->tenant);
+
     $this->user = User::factory()->create();
     $this->vendor = Vendor::factory()->create([
         'user_id' => $this->user->id,
@@ -91,7 +94,10 @@ describe('ProductController', function () {
     });
 
     test('filters products by brand', function () {
-        $brand = Brand::factory()->create();
+        $brand = Brand::create([
+            'name' => 'Test Brand',
+            'tenant_id' => $this->tenant->id,
+        ]);
         Product::factory()->create([
             'vendor_id' => $this->vendor->id,
             'brand_id' => $brand->id,
@@ -108,7 +114,14 @@ describe('ProductController', function () {
     });
 
     test('filters products by collection', function () {
-        $collection = Collection::factory()->create();
+        $collectionGroup = \Lunar\Models\CollectionGroup::where('handle', 'main')->first();
+        $collection = Collection::create([
+            'collection_group_id' => $collectionGroup->id,
+            'attribute_data' => collect([
+                'name' => new \Lunar\FieldTypes\Text('Test Collection'),
+            ]),
+            'tenant_id' => $this->tenant->id,
+        ]);
         $product = Product::factory()->create(['vendor_id' => $this->vendor->id]);
         $collection->products()->attach($product->id, ['position' => 1]);
 

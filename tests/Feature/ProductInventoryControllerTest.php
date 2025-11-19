@@ -22,6 +22,9 @@ describe('ProductInventoryController', function () {
 
         $this->tenant = Tenant::where('name', 'GRNMA')->first();
 
+        // Initialize tenancy for this tenant
+        tenancy()->initialize($this->tenant);
+
         $this->user = User::factory()->create();
         $this->user->assignRole('association-administrator');
         $this->actingAs($this->user, 'api');
@@ -31,9 +34,18 @@ describe('ProductInventoryController', function () {
         $this->vendor = Vendor::factory()->create(['user_id' => $this->user->id]);
         $this->user->vendor_id = $this->vendor->id;
 
-        Language::factory()->create(['code' => 'en', 'default' => true]);
-        $this->currency = Currency::factory()->create(['code' => 'GHS', 'default' => true]);
-        $this->taxClass = TaxClass::factory()->create();
+        Language::firstOrCreate(
+            ['code' => 'en'],
+            ['name' => 'English', 'default' => true]
+        );
+        $this->currency = Currency::firstOrCreate(
+            ['code' => 'GHS'],
+            ['name' => 'Ghana Cedi', 'exchange_rate' => 1, 'decimal_places' => 2, 'enabled' => true, 'default' => true]
+        );
+        $this->taxClass = TaxClass::firstOrCreate(
+            ['name' => 'Default'],
+            ['default' => true]
+        );
 
         $this->product = Product::factory()->create(['vendor_id' => $this->vendor->id]);
     });

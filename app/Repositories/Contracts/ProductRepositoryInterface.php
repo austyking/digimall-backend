@@ -149,4 +149,34 @@ interface ProductRepositoryInterface
      * Count products by vendor.
      */
     public function countByVendor(string $vendorId): int;
+
+    /**
+     * Get filtered products with pagination.
+     */
+    public function filterPaginated(array $filters, int $perPage = 15): LengthAwarePaginator;
+
+    /**
+     * Get products pending admin review.
+     */
+    public function getPendingReview(int $perPage = 15): LengthAwarePaginator;
+
+    /**
+     * Update product status.
+     */
+    public function updateStatus(int $id, string $status): bool;
+
+    /**
+     * Count all products.
+     */
+    public function count(): int;
+
+    /**
+     * Count products by status.
+     */
+    public function countByStatus(string $status): int;
+
+    /**
+     * Count low stock products.
+     */
+    public function countLowStock(int $threshold = 10): int;
 }

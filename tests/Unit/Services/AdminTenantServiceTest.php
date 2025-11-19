@@ -8,13 +8,14 @@ use App\Models\Tenant;
 use App\Repositories\Contracts\TenantRepositoryInterface;
 use App\Services\AdminTenantService;
 use App\Services\Contracts\FileUploadServiceInterface;
+use App\Services\Contracts\UserServiceInterface;
 use Illuminate\Validation\ValidationException;
 
 describe('AdminTenantService Unit Tests', function () {
     beforeEach(function () {
         $this->mockRepository = Mockery::mock(TenantRepositoryInterface::class);
         $this->mockFileUploadService = Mockery::mock(FileUploadServiceInterface::class);
-        $this->mockUserService = Mockery::mock(App\Services\UserService::class);
+        $this->mockUserService = mock(UserServiceInterface::class);
         $this->service = new AdminTenantService($this->mockRepository, $this->mockFileUploadService, $this->mockUserService);
     });
 
@@ -29,14 +30,22 @@ describe('AdminTenantService Unit Tests', function () {
                 displayName: 'Ghana Pharmacy Association',
                 description: 'Test description',
                 active: true,
-                settings: ['branding' => ['primary_color' => '#4caf50']],
+                settings: [
+                    'contact' => ['email' => 'admin@gpa.org'],
+                    'branding' => ['primary_color' => '#4caf50'],
+                ],
                 createdBy: '123'
             );
 
-            $expectedTenant = Tenant::factory()->make([
-                'name' => 'GPA',
-                'display_name' => 'Ghana Pharmacy Association',
-            ]);
+            $expectedTenant = Mockery::mock(Tenant::class)->makePartial();
+            $expectedTenant->name = 'GPA';
+            $expectedTenant->display_name = 'Ghana Pharmacy Association';
+
+            // Mock the fresh method to return the same tenant
+            $expectedTenantWithDomains = Mockery::mock(Tenant::class)->makePartial();
+            $expectedTenantWithDomains->name = 'GPA';
+            $expectedTenantWithDomains->display_name = 'Ghana Pharmacy Association';
+            $expectedTenant->shouldReceive('fresh')->with(['domains'])->andReturn($expectedTenantWithDomains);
 
             $this->mockRepository
                 ->shouldReceive('findByName')
@@ -48,8 +57,12 @@ describe('AdminTenantService Unit Tests', function () {
                 ->shouldReceive('createUserWithRandomPassword')
                 ->once()
                 ->with(Mockery::on(function ($data) {
-                    return is_array($data) && isset($data['email']) && isset($data['name']);
-                }), 'vendor')
+                    return is_array($data)
+                        && isset($data['email'])
+                        && $data['email'] === 'admin@gpa.org'
+                        && isset($data['name'])
+                        && $data['name'] === 'GPA';
+                }), 'association-administrator')
                 ->andReturn(['user' => new \App\Models\User(['id' => 'user-1']), 'password' => 'secret']);
 
             $this->mockRepository
@@ -118,6 +131,7 @@ describe('AdminTenantService Unit Tests', function () {
 
         test('passes settings from DTO to repository', function () {
             $settings = [
+                'contact' => ['email' => 'admin@test.org'],
                 'branding' => ['primary_color' => '#1976d2'],
                 'features' => ['hire_purchase_enabled' => true],
             ];
@@ -134,6 +148,15 @@ describe('AdminTenantService Unit Tests', function () {
                 ->once()
                 ->andReturn(null);
 
+            // Mock UserService call
+            $this->mockUserService
+                ->shouldReceive('createUserWithRandomPassword')
+                ->once()
+                ->andReturn(['user' => new \App\Models\User(['id' => 'user-1']), 'password' => 'secret']);
+
+            $mockTenant = Mockery::mock(Tenant::class)->makePartial();
+            $mockTenant->shouldReceive('fresh')->with(['domains'])->andReturn($mockTenant);
+
             $this->mockRepository
                 ->shouldReceive('create')
                 ->once()
@@ -143,7 +166,7 @@ describe('AdminTenantService Unit Tests', function () {
                         && isset($data['settings']['features']['hire_purchase_enabled'])
                         && $data['settings']['features']['hire_purchase_enabled'] === true;
                 }))
-                ->andReturn(Tenant::factory()->make());
+                ->andReturn($mockTenant);
 
             $this->service->createTenant($dto);
         });
@@ -152,6 +175,7 @@ describe('AdminTenantService Unit Tests', function () {
             $dto = new AdminCreateTenantDTO(
                 name: 'AUDIT',
                 displayName: 'Audit Test',
+                settings: ['contact' => ['email' => 'admin@audit.org']],
                 createdBy: 'user-123'
             );
 
@@ -159,6 +183,15 @@ describe('AdminTenantService Unit Tests', function () {
                 ->shouldReceive('findByName')
                 ->once()
                 ->andReturn(null);
+
+            // Mock UserService call
+            $this->mockUserService
+                ->shouldReceive('createUserWithRandomPassword')
+                ->once()
+                ->andReturn(['user' => new \App\Models\User(['id' => 'user-1']), 'password' => 'secret']);
+
+            $mockTenant = Mockery::mock(Tenant::class)->makePartial();
+            $mockTenant->shouldReceive('fresh')->with(['domains'])->andReturn($mockTenant);
 
             $this->mockRepository
                 ->shouldReceive('create')
@@ -168,7 +201,7 @@ describe('AdminTenantService Unit Tests', function () {
                         && $data['settings']['created_by']['user_id'] === 'user-123'
                         && isset($data['settings']['created_by']['at']);
                 }))
-                ->andReturn(Tenant::factory()->make());
+                ->andReturn($mockTenant);
 
             $this->service->createTenant($dto);
         });

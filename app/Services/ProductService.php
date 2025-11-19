@@ -411,4 +411,62 @@ final readonly class ProductService
             'purchasable' => $purchasable,
         ];
     }
+
+    /**
+     * Get filtered products with pagination for admin oversight.
+     */
+    public function getFilteredProductsPaginated(array $filters = [], int $perPage = 15): LengthAwarePaginator
+    {
+        return $this->productRepository->filterPaginated($filters, $perPage);
+    }
+
+    /**
+     * Get products pending admin review.
+     */
+    public function getPendingReviewProducts(int $perPage = 15): LengthAwarePaginator
+    {
+        return $this->productRepository->getPendingReview($perPage);
+    }
+
+    /**
+     * Approve a product for public visibility.
+     */
+    public function approveProduct(int $productId): bool
+    {
+        return $this->productRepository->updateStatus($productId, 'active');
+    }
+
+    /**
+     * Reject a product with reason.
+     */
+    public function rejectProduct(int $productId, string $reason): bool
+    {
+        // Update status and store rejection reason
+        $this->productRepository->update($productId, [
+            'status' => 'rejected',
+            'rejection_reason' => $reason,
+        ]);
+
+        return true;
+    }
+
+    /**
+     * Get product statistics for admin dashboard.
+     */
+    public function getProductStatistics(): array
+    {
+        $totalProducts = $this->productRepository->count();
+        $activeProducts = $this->productRepository->countByStatus('active');
+        $pendingProducts = $this->productRepository->countByStatus('pending');
+        $rejectedProducts = $this->productRepository->countByStatus('rejected');
+        $lowStockProducts = $this->productRepository->countLowStock();
+
+        return [
+            'total_products' => $totalProducts,
+            'active_products' => $activeProducts,
+            'pending_products' => $pendingProducts,
+            'rejected_products' => $rejectedProducts,
+            'low_stock_products' => $lowStockProducts,
+        ];
+    }
 }

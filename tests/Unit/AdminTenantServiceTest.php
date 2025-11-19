@@ -10,12 +10,14 @@ use App\Models\Tenant;
 use App\Repositories\Contracts\TenantRepositoryInterface;
 use App\Services\AdminTenantService;
 use App\Services\Contracts\FileUploadServiceInterface;
+use App\Services\Contracts\UserServiceInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 beforeEach(function () {
     $this->mockRepository = mock(TenantRepositoryInterface::class);
     $this->mockFileUploadService = mock(FileUploadServiceInterface::class);
-    $this->service = new AdminTenantService($this->mockRepository, $this->mockFileUploadService);
+    $this->mockUserService = mock(UserServiceInterface::class);
+    $this->service = new AdminTenantService($this->mockRepository, $this->mockFileUploadService, $this->mockUserService);
 });
 
 describe('AdminTenantService Unit Tests', function () {

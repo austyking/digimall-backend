@@ -25,25 +25,31 @@ class ProductSeeder extends Seeder
     public function run(): void
     {
         // Create default language if not exists
-        $language = Language::firstOrCreate(
-            ['code' => 'en'],
-            [
+        if (! Language::where('code', 'en')->exists()) {
+            Language::create([
+                'code' => 'en',
                 'name' => 'English',
                 'default' => true,
-            ]
-        );
+            ]);
+            $this->command->info('Created default language');
+        }
+
+        $language = Language::where('code', 'en')->first();
 
         // Create default currency if not exists
-        $currency = Currency::firstOrCreate(
-            ['code' => 'GHS'],
-            [
+        if (! Currency::where('code', 'GHS')->exists()) {
+            Currency::create([
+                'code' => 'GHS',
                 'name' => 'Ghana Cedi',
                 'exchange_rate' => 1,
                 'decimal_places' => 2,
                 'enabled' => true,
                 'default' => true,
-            ]
-        );
+            ]);
+            $this->command->info('Created default currency');
+        }
+
+        $currency = Currency::where('code', 'GHS')->first();
 
         // Create default tax class if not exists
         $taxClass = TaxClass::firstOrCreate(
@@ -58,21 +64,21 @@ class ProductSeeder extends Seeder
         );
 
         // Create brands
-        $brands = [
-            [
-                'name' => 'Generic',
-            ],
-            [
-                'name' => 'Premium',
-            ],
-            [
-                'name' => 'Budget',
-            ],
-        ];
-
-        foreach ($brands as $brandData) {
-            Brand::firstOrCreate(['name' => $brandData['name']], $brandData);
-        }
+        //        $brands = [
+        //            [
+        //                'name' => 'Generic',
+        //            ],
+        //            [
+        //                'name' => 'Premium',
+        //            ],
+        //            [
+        //                'name' => 'Budget',
+        //            ],
+        //        ];
+        //
+        //        foreach ($brands as $brandData) {
+        //            Brand::firstOrCreate(['name' => $brandData['name']], $brandData);
+        //        }
 
         // Create default collection group if not exists
         $collectionGroup = CollectionGroup::firstOrCreate(
@@ -81,34 +87,34 @@ class ProductSeeder extends Seeder
         );
 
         // Create collections
-        $collections = [
-            ['name' => 'Featured', 'type' => 'static'],
-            ['name' => 'New Arrivals', 'type' => 'static'],
-            ['name' => 'Best Sellers', 'type' => 'static'],
-        ];
-
-        foreach ($collections as $collectionData) {
-            Collection::firstOrCreate(
-                [
-                    'collection_group_id' => $collectionGroup->id,
-                    'attribute_data->name->value' => $collectionData['name'],
-                ],
-                [
-                    'collection_group_id' => $collectionGroup->id,
-                    'type' => $collectionData['type'],
-                    'attribute_data' => [
-                        'name' => new Text($collectionData['name']),
-                    ],
-                ]
-            );
-        }
+        //        $collections = [
+        //            ['name' => 'Featured', 'type' => 'static'],
+        //            ['name' => 'New Arrivals', 'type' => 'static'],
+        //            ['name' => 'Best Sellers', 'type' => 'static'],
+        //        ];
+        //
+        //        foreach ($collections as $collectionData) {
+        //            Collection::firstOrCreate(
+        //                [
+        //                    'collection_group_id' => $collectionGroup->id,
+        //                    'attribute_data->name->value' => $collectionData['name'],
+        //                ],
+        //                [
+        //                    'collection_group_id' => $collectionGroup->id,
+        //                    'type' => $collectionData['type'],
+        //                    'attribute_data' => [
+        //                        'name' => new Text($collectionData['name']),
+        //                    ],
+        //                ]
+        //            );
+        //        }
 
         // Create sample products with variants
         $products = [
             [
                 'name' => 'Test Product 1',
                 'status' => 'published',
-                'brand' => 'Generic',
+                'brand' => Brand::inRandomOrder()->first()->name,
                 'variants' => [
                     [
                         'sku' => 'TEST-001-S',
@@ -129,7 +135,7 @@ class ProductSeeder extends Seeder
             [
                 'name' => 'Test Product 2',
                 'status' => 'published',
-                'brand' => 'Premium',
+                'brand' => Brand::inRandomOrder()->first()->name,
                 'variants' => [
                     [
                         'sku' => 'TEST-002',
@@ -143,7 +149,7 @@ class ProductSeeder extends Seeder
             [
                 'name' => 'Test Product 3',
                 'status' => 'published',
-                'brand' => 'Generic',
+                'brand' => Brand::inRandomOrder()->first()->name,
                 'variants' => [
                     [
                         'sku' => 'TEST-003',

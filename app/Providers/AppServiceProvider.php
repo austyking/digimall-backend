@@ -13,6 +13,7 @@ use App\Repositories\Contracts\PriceRepositoryInterface;
 use App\Repositories\Contracts\ProductCollectionRepositoryInterface;
 use App\Repositories\Contracts\ProductRepositoryInterface;
 use App\Repositories\Contracts\ProductVariantRepositoryInterface;
+use App\Repositories\Contracts\TaxonomyRepositoryInterface;
 use App\Repositories\Contracts\TenantRepositoryInterface;
 use App\Repositories\Contracts\UrlRepositoryInterface;
 use App\Repositories\Contracts\UserRepositoryInterface;
@@ -24,14 +25,18 @@ use App\Repositories\PriceRepository;
 use App\Repositories\ProductCollectionRepository;
 use App\Repositories\ProductRepository;
 use App\Repositories\ProductVariantRepository;
+use App\Repositories\TaxonomyRepository;
 use App\Repositories\TenantRepository;
 use App\Repositories\UrlRepository;
 use App\Repositories\UserRepository;
 use App\Repositories\VendorRepository;
 use App\Services\AdminTenantService;
 use App\Services\Contracts\FileUploadServiceInterface;
+use App\Services\Contracts\UserServiceInterface;
 use App\Services\FileUploadService;
+use App\Services\TaxonomyService;
 use App\Services\TenantStatisticsService;
+use App\Services\UserService;
 use Illuminate\Support\ServiceProvider;
 use Laravel\Passport\Passport;
 use Lunar\Admin\Support\Facades\LunarPanel;
@@ -58,9 +63,12 @@ class AppServiceProvider extends ServiceProvider
         $this->app->bind(VendorRepositoryInterface::class, VendorRepository::class);
         $this->app->bind(CustomerRepositoryInterface::class, CustomerRepository::class);
         $this->app->bind(UserRepositoryInterface::class, UserRepository::class);
+        $this->app->bind(TaxonomyRepositoryInterface::class, TaxonomyRepository::class);
 
         // Register service bindings
         $this->app->bind(FileUploadServiceInterface::class, FileUploadService::class);
+        $this->app->bind(UserServiceInterface::class, UserService::class);
+        $this->app->bind(TaxonomyService::class);
 
         // Register Admin services
         $this->app->singleton(AdminTenantService::class);
@@ -79,6 +87,26 @@ class AppServiceProvider extends ServiceProvider
         \Lunar\Facades\ModelManifest::replace(
             \Lunar\Models\Contracts\Product::class,
             \App\Models\Product::class,
+        );
+
+        \Lunar\Facades\ModelManifest::replace(
+            \Lunar\Models\Contracts\Collection::class,
+            \App\Models\Collection::class,
+        );
+
+        \Lunar\Facades\ModelManifest::replace(
+            \Lunar\Models\Contracts\Brand::class,
+            \App\Models\Brand::class,
+        );
+
+        \Lunar\Facades\ModelManifest::replace(
+            \Lunar\Models\Contracts\Tag::class,
+            \App\Models\Tag::class,
+        );
+
+        \Lunar\Facades\ModelManifest::replace(
+            \Lunar\Models\Contracts\Attribute::class,
+            \App\Models\Attribute::class,
         );
 
         // Configure Passport encryption keys
